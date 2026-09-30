@@ -1,0 +1,60 @@
+import { Link } from 'react-router-dom';
+import {
+  MissionSection,
+  HowWeUnderstandSection,
+  ValuesSection,
+  SecuritySection,
+  TeamSection,
+  CTAFinalSection,
+} from '../components/sections';
+
+function AboutHero() {
+  return (
+    <section className="bg-gradient-to-br from-sky-50 via-white to-teal-50 pt-10 pb-16 sm:pt-14 sm:pb-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="font-semibold text-sky-600">Sobre nosotros</p>
+          <h1 className="mt-3 text-4xl font-bold leading-tight text-sky-900 sm:text-5xl lg:text-6xl">
+            Atención médica profesional,<br />
+            <span className="text-sky-600">estés donde estés.</span>
+          </h1>
+          <p className="mt-6 text-lg leading-relaxed text-slate-600 max-w-2xl mx-auto">
+            SaludOnline es una plataforma de telemedicina que conecta pacientes con profesionales de la salud
+            certificados. Nuestra misión: hacer que la atención médica de calidad sea accesible, segura y simple
+            para todas las personas, sin importar su ubicación.
+          </p>
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row justify-center">
+            <Link
+              to="/professionals"
+              className="rounded-full bg-sky-600 px-7 py-3.5 font-semibold text-white shadow-lg transition hover:bg-sky-700 text-center"
+            >
+              Conocer nuestros profesionales
+            </Link>
+            <Link
+              to="/specialties"
+              className="rounded-full border border-slate-300 bg-white px-7 py-3.5 text-center font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-600"
+            >
+              Reservar una consulta
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function About() {
+  return (
+    <>
+      <AboutHero />
+      <MissionSection />
+      <HowWeUnderstandSection />
+      <ValuesSection />
+      <SecuritySection />
+      <TeamSection />
+      <CTAFinalSection />
+    </>
+  );
+}
+
+export default About;

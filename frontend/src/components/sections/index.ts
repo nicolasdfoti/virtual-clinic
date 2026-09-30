@@ -1,0 +1,11 @@
+export { SpecialtiesSection } from './SpecialtiesSection';
+export { ProfessionalsSection, ProfessionalCard } from './ProfessionalsSection';
+export { HowItWorksSection } from './HowItWorksSection';
+export { BenefitsSection } from './BenefitsSection';
+export { ValuesSection } from './ValuesSection';
+export { SecuritySection } from './SecuritySection';
+export { TeamSection } from './TeamSection';
+export { CTAFinalSection, TrustSection } from './CTASection';
+export { MissionSection } from './MissionSection';
+export { HowWeUnderstandSection } from './HowWeUnderstandSection';
+export { FAQSection } from './FAQSection';
