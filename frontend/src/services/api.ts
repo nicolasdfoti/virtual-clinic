@@ -45,3 +45,5 @@ export const api = {
       method: 'DELETE',
     }),
 }
+
+export default api

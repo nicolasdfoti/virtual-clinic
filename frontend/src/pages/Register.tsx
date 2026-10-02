@@ -1,19 +1,25 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-
+import { Link, useNavigate } from 'react-router-dom'
+import api from '../services/api'
+  
 function Register() {
-  const [name, setName] = useState('')
+  const navigate = useNavigate()
+  const [first_name, setFirstName] = useState('')
+  const [last_name, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('') 
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     setError('')
+    setSuccess('')
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!first_name || !last_name || !email || !password || !confirmPassword) {
       setError('Completá todos los campos.')
       return
     }
@@ -29,10 +35,35 @@ function Register() {
     }
 
     console.log({
-      name,
+      first_name,
+      last_name,
       email,
       password,
     })
+
+    try {
+      setIsLoading(true)
+
+      await api.post("/auth/register", {
+        first_name,
+        last_name,
+        email,
+        password,
+      })
+
+      setSuccess("Cuenta creada correctamente")
+      setTimeout(() => {
+        navigate("/login")
+      }, 1500)
+    } catch (error: any) {
+      if (error.response?.data?.detail) {
+        setError(error.response.data.detail)
+      } else {
+        setError("Ocurrió un error al crear la cuenta.")
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -63,7 +94,7 @@ function Register() {
           className="mt-8 space-y-5"
         >
 
-          {/* Name */}
+          {/* First Name */}
           <div>
             <label
               htmlFor="name"
@@ -75,9 +106,28 @@ function Register() {
             <input
               id="name"
               type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Juan Pérez"
+              value={first_name}
+              onChange={(event) => setFirstName(event.target.value)}
+              placeholder="Juan"
+              className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            />
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <label
+              htmlFor="last_name"
+              className="block text-sm font-medium text-slate-700"
+            >
+              Apellido
+            </label>
+
+            <input
+              id="last_name"
+              type="text"
+              value={last_name}
+              onChange={(event) => setLastName(event.target.value)}
+              placeholder="Pérez"
               className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             />
           </div>
