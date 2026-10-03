@@ -19,7 +19,7 @@ function AboutHero() {
             <span className="text-sky-600">estés donde estés.</span>
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-slate-600 max-w-2xl mx-auto">
-            SaludOnline es una plataforma de telemedicina que conecta pacientes con profesionales de la salud
+            Clínica Virtual es una plataforma de telemedicina que conecta pacientes con profesionales de la salud
             certificados. Nuestra misión: hacer que la atención médica de calidad sea accesible, segura y simple
             para todas las personas, sin importar su ubicación.
           </p>

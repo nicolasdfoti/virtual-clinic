@@ -23,7 +23,7 @@ export function MissionSection() {
             <Card variant="default" padding="lg" className="bg-white shadow-sm">
               <h3 className="text-xl font-bold text-sky-900">Por qué existimos</h3>
               <p className="mt-3 leading-relaxed text-slate-600">
-                SaludOnline nació para democratizar el acceso a la salud. Queremos que cualquier persona, sin importar dónde viva
+                Clínica Virtual nació para democratizar el acceso a la salud. Queremos que cualquier persona, sin importar dónde viva
                 o cuál sea su horario, pueda consultar a un profesional certificado en minutos, no en semanas.
               </p>
             </Card>

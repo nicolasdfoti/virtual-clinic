@@ -1,0 +1,18 @@
+# Dependencias directas del backend. Editar este archivo, nunca requirements.txt.
+# Para recompilar el lock:  pip-compile requirements.in
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+SQLAlchemy==2.1.1
+alembic==1.20.0
+psycopg[binary]==3.3.6
+pydantic==2.13.5
+pydantic-settings==2.15.0
+email-validator==2.3.0
+python-dotenv==1.2.4
+
+# Auth. Ver la nota de deuda en docs/ sobre migrar a PyJWT + pwdlib:
+# passlib esta sin mantenimiento y por eso bcrypt va pineado en 4.0.1
+# (con 4.1+ passlib 1.7.4 lanza un error al detectar la version).
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]==3.5.0

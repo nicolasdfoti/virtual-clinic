@@ -1,0 +1,13 @@
+# Dependencias de desarrollo (tests y herramientas).
+# Instalar con:  pip install -r requirements-dev.txt
+-r requirements.txt
+
+pytest==9.1.1
+
+# Requerido por fastapi.testclient (TestClient).
+httpx==0.28.1
+
+# Para recompilar requirements.txt desde requirements.in:
+#   pip install pip-tools
+#   pip-compile requirements.in
+pip-tools==7.5.2

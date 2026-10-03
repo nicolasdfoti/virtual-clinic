@@ -67,8 +67,7 @@ function ContactFormSection() {
     message: '',
   });
   const [errors, setErrors] = useState<Partial<ContactFormData>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'unavailable'>('idle');
 
   const validate = (data: ContactFormData) => {
     const newErrors: Partial<ContactFormData> = {};
@@ -80,7 +79,7 @@ function ContactFormSection() {
     return newErrors;
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors = validate(formData);
     if (Object.keys(newErrors).length > 0) {
@@ -88,16 +87,17 @@ function ContactFormSection() {
       return;
     }
     setErrors({});
-    setIsSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    console.log('Form submitted:', formData);
-
-    setSubmitStatus('success');
-    setFormData({ name: '', email: '', subject: 'general', message: '' });
-    setIsSubmitting(false);
-    setTimeout(() => setSubmitStatus('idle'), 5000);
+    // TODO(contact): falta el endpoint POST /api/contact. Cuando exista, hacer
+    // la llamada aca, mover los `disabled={isSubmitting}` a true durante la
+    // request y recién entonces mostrar el estado de exito.
+    //
+    // Antes esto hacia un setTimeout de 1.5s y logueaba el formulario a la
+    // consola, y despues mostraba "Mensaje enviado". Eso era falso: no se
+    // mandaba nada y ademas dejaba PII (nombre, email, mensaje) en la consola
+    // del navegador. Ahora se valida y se dice explicitamente que el canal no
+    // esta disponible.
+    setSubmitStatus('unavailable');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -106,6 +106,9 @@ function ContactFormSection() {
     if (errors[name as keyof ContactFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+    if (submitStatus === 'unavailable') {
+      setSubmitStatus('idle');
+    }
   };
 
   return (
@@ -113,22 +116,21 @@ function ContactFormSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl">
           <SectionHeader
-            title="Enviános un mensaje"
-            description="Completá el formulario y te responderemos a la brevedad."
+            title="Envianos un mensaje"
+            description="Cuando habilitemos el formulario, te vamos a responder a la brevedad."
             align="left"
           />
 
-          {submitStatus === 'success' && (
-            <div className="mb-8 p-4 rounded-xl bg-emerald-50 border border-emerald-200 animate-slide-down">
-              <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                <div>
-                  <p className="font-semibold text-emerald-800">¡Mensaje enviado!</p>
-                  <p className="text-sm text-emerald-700">Te responderemos a la brevedad al email indicado.</p>
-                </div>
+          <div className="mb-8 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div>
+                <p className="font-semibold text-amber-800">El formulario todavía no está disponible</p>
+                <p className="text-sm text-amber-700">
+                  El formulario no está disponible todavía. Mientras tanto,
+                  escribinos directo a{' '}
+                  <a href="mailto:contacto@clinicavirtual.com" className="font-medium underline">contacto@clinicavirtual.com</a>.
+                </p>
               </div>
             </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div className="grid gap-6 sm:grid-cols-2">
@@ -146,7 +148,6 @@ function ContactFormSection() {
                   className={`mt-1 w-full rounded-lg border px-4 py-3 outline-none transition ${errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-slate-300 focus:border-sky-500 focus:ring-sky-100'}`}
                   aria-invalid={errors.name ? 'true' : 'false'}
                   aria-describedby={errors.name ? 'name-error' : undefined}
-                  disabled={isSubmitting}
                 />
                 {errors.name && <p id="name-error" className="mt-1 text-sm text-red-600" role="alert">{errors.name}</p>}
               </div>
@@ -165,7 +166,6 @@ function ContactFormSection() {
                   className={`mt-1 w-full rounded-lg border px-4 py-3 outline-none transition ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-slate-300 focus:border-sky-500 focus:ring-sky-100'}`}
                   aria-invalid={errors.email ? 'true' : 'false'}
                   aria-describedby={errors.email ? 'email-error' : undefined}
-                  disabled={isSubmitting}
                 />
                 {errors.email && <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">{errors.email}</p>}
               </div>
@@ -181,7 +181,6 @@ function ContactFormSection() {
                 value={formData.subject}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-lg border border-slate-300 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-                disabled={isSubmitting}
               >
                 {contactSubjects.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -203,13 +202,20 @@ function ContactFormSection() {
                 className={`mt-1 w-full rounded-lg border px-4 py-3 outline-none transition resize-none ${errors.message ? 'border-red-500 focus:border-red-500 focus:ring-red-100' : 'border-slate-300 focus:border-sky-500 focus:ring-sky-100'}`}
                 aria-invalid={errors.message ? 'true' : 'false'}
                 aria-describedby={errors.message ? 'message-error' : 'message-hint'}
-                disabled={isSubmitting}
               />
               {errors.message && <p id="message-error" className="mt-1 text-sm text-red-600" role="alert">{errors.message}</p>}
               <p id="message-hint" className="mt-1 text-sm text-slate-500">Mínimo 10 caracteres</p>
             </div>
 
-            <Button type="submit" size="lg" isLoading={isSubmitting} className="w-full sm:w-auto">
+            {submitStatus === 'unavailable' && (
+              <p role="status" className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Todavía no pudimos enviar tu mensaje: este formulario no está conectado a ningún
+                servicio. Escribinos directo a{' '}
+                <a href="mailto:contacto@clinicavirtual.com" className="font-medium underline">contacto@clinicavirtual.com</a>.
+              </p>
+            )}
+
+            <Button type="submit" size="lg" className="w-full sm:w-auto">
               Enviar mensaje
             </Button>
           </form>

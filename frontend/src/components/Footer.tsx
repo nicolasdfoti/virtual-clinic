@@ -40,12 +40,12 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Link to="/" className="flex items-center gap-2" aria-label="SaludOnline - Inicio">
+            <Link to="/" className="flex items-center gap-2" aria-label="Clínica Virtual - Inicio">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-xl font-bold text-white" aria-hidden="true">
                 +
               </span>
               <span className="text-xl font-bold text-white">
-                Salud<span className="text-sky-400">Online</span>
+                Clínica<span className="text-sky-400">Virtual</span>
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
@@ -71,7 +71,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t border-slate-800 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {currentYear} SaludOnline. Todos los derechos reservados.</p>
+          <p>© {currentYear} Clínica Virtual. Todos los derechos reservados.</p>
           <p>Las consultas virtuales no reemplazan la atención de emergencias.</p>
         </div>
       </div>

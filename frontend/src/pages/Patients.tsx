@@ -69,7 +69,7 @@ function JourneySection() {
     <section id="journey" className="bg-sky-50 py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          title="Tu jornada en SaludOnline"
+          title="Tu jornada en Clínica Virtual"
           description="Desde que te registrás hasta el seguimiento de tu tratamiento, todo en una sola plataforma."
         />
         <div className="mt-12 relative">

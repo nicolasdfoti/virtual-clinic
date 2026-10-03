@@ -34,13 +34,6 @@ function Register() {
       return
     }
 
-    console.log({
-      first_name,
-      last_name,
-      email,
-      password,
-    })
-
     try {
       setIsLoading(true)
 
@@ -55,12 +48,12 @@ function Register() {
       setTimeout(() => {
         navigate("/login")
       }, 1500)
-    } catch (error: any) {
-      if (error.response?.data?.detail) {
-        setError(error.response.data.detail)
-      } else {
-        setError("Ocurrió un error al crear la cuenta.")
-      }
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Ocurrió un error al crear la cuenta.",
+      )
     } finally {
       setIsLoading(false)
     }
@@ -76,7 +69,7 @@ function Register() {
             to="/"
             className="text-2xl font-bold text-sky-900"
           >
-            Salud<span className="text-sky-600">Online</span>
+            Clínica<span className="text-sky-600">Virtual</span>
           </Link>
 
           <h1 className="mt-8 text-3xl font-bold text-sky-900">
@@ -97,15 +90,18 @@ function Register() {
           {/* First Name */}
           <div>
             <label
-              htmlFor="name"
+              htmlFor="first_name"
               className="block text-sm font-medium text-slate-700"
             >
-              Nombre completo
+              Nombre
             </label>
 
             <input
-              id="name"
+              id="first_name"
+              name="first_name"
               type="text"
+              autoComplete="given-name"
+              disabled={isLoading}
               value={first_name}
               onChange={(event) => setFirstName(event.target.value)}
               placeholder="Juan"
@@ -124,7 +120,10 @@ function Register() {
 
             <input
               id="last_name"
+              name="last_name"
               type="text"
+              autoComplete="family-name"
+              disabled={isLoading}
               value={last_name}
               onChange={(event) => setLastName(event.target.value)}
               placeholder="Pérez"
@@ -143,7 +142,10 @@ function Register() {
 
             <input
               id="email"
+              name="email"
               type="email"
+              autoComplete="email"
+              disabled={isLoading}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="tu@email.com"
@@ -162,7 +164,10 @@ function Register() {
 
             <input
               id="password"
+              name="password"
               type="password"
+              autoComplete="new-password"
+              disabled={isLoading}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
@@ -181,7 +186,10 @@ function Register() {
 
             <input
               id="confirmPassword"
+              name="confirmPassword"
               type="password"
+              autoComplete="new-password"
+              disabled={isLoading}
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               placeholder="••••••••"
@@ -191,17 +199,31 @@ function Register() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div
+              className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600"
+              role="alert"
+            >
               {error}
+            </div>
+          )}
+
+          {/* Success */}
+          {success && (
+            <div
+              className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+              role="status"
+            >
+              {success}
             </div>
           )}
 
           {/* Submit */}
           <button
             type="submit"
-            className="w-full rounded-lg bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700"
+            disabled={isLoading}
+            className="w-full rounded-lg bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Crear cuenta
+            {isLoading ? 'Creando cuenta…' : 'Crear cuenta'}
           </button>
 
         </form>

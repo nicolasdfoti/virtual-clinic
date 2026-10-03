@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 
+import { useAuth } from '../context/useAuth';
+import { homeForRole } from '../routes/roleHome';
+
 type NavItem = {
   label: string;
   href: string;
@@ -21,6 +24,81 @@ const publicNavItems: NavItem[] = [
   { label: 'Profesionales', href: '/professionals' },
   { label: 'Contacto', href: '/contact' },
 ];
+
+/** Links de sesion. Es un componente propio para no duplicar el bloque
+ *  desktop/movil con toda su logica de dropdown.
+ *
+ *  `variant` solo cambia presentacion: desktop es una fila de links, movil los
+ *  muestra apilados a ancho completo. El contenido es el mismo.
+ */
+function SessionLinks({
+  onNavigate,
+  variant,
+}: {
+  onNavigate: () => void;
+  variant: 'desktop' | 'mobile';
+}) {
+  const { user, logout } = useAuth();
+  const isMobile = variant === 'mobile';
+
+  if (!user) {
+    return (
+      <>
+        <NavLink
+          to="/login"
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            isMobile
+              ? 'block rounded-lg px-3 py-3 text-center text-base font-medium text-sky-600 hover:bg-sky-50'
+              : `rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                  isActive ? 'bg-sky-50 text-sky-700' : 'text-sky-600 hover:bg-sky-50'
+                }`
+          }
+        >
+          Iniciar sesión
+        </NavLink>
+        <NavLink
+          to="/register"
+          onClick={onNavigate}
+          className={
+            isMobile
+              ? 'block rounded-lg bg-sky-600 px-3 py-3 text-center text-base font-medium text-white hover:bg-sky-700'
+              : 'rounded-full bg-sky-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sky-700'
+          }
+        >
+          Registrarse
+        </NavLink>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <NavLink
+        to={homeForRole(user.role)}
+        onClick={onNavigate}
+        className={
+          isMobile
+            ? 'block rounded-lg px-3 py-3 text-center text-base font-medium text-slate-600 hover:bg-sky-50'
+            : 'rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-600'
+        }
+      >
+        {user.first_name}
+      </NavLink>
+      <button
+        type="button"
+        onClick={() => void logout()}
+        className={
+          isMobile
+            ? 'block w-full rounded-lg bg-sky-600 px-3 py-3 text-center text-base font-medium text-white hover:bg-sky-700'
+            : 'rounded-full bg-sky-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sky-700'
+        }
+      >
+        Cerrar sesión
+      </button>
+    </>
+  );
+}
 
 export function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,12 +157,12 @@ export function NavBar() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between lg:h-20">
-          <Link to="/" className="flex flex-shrink-0 items-center gap-2" aria-label="SaludOnline - Inicio">
+          <Link to="/" className="flex flex-shrink-0 items-center gap-2" aria-label="Clínica Virtual - Inicio">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-xl font-bold text-white shadow-md" aria-hidden="true">
               +
             </span>
             <span className="hidden text-2xl font-bold tracking-tight text-sky-900 sm:block">
-              Salud<span className="text-sky-600">Online</span>
+              Clínica<span className="text-sky-600">Virtual</span>
             </span>
           </Link>
 
@@ -115,22 +193,7 @@ export function NavBar() {
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <NavLink
-              to="/login"
-              className={({ isActive: active }) =>
-                `rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-                  active ? 'bg-sky-50 text-sky-700' : 'text-sky-600 hover:bg-sky-50'
-                }`
-              }
-            >
-              Iniciar sesión
-            </NavLink>
-            <NavLink
-              to="/register"
-              className="rounded-full bg-sky-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sky-700"
-            >
-              Registrarse
-            </NavLink>
+            <SessionLinks onNavigate={closeAll} variant="desktop" />
           </div>
 
           <button
@@ -169,20 +232,7 @@ export function NavBar() {
                 )
               )}
               <div className="space-y-2 border-t border-slate-200 pt-4">
-                <NavLink
-                  to="/login"
-                  onClick={closeAll}
-                  className="block rounded-lg px-3 py-3 text-center text-base font-medium text-sky-600 hover:bg-sky-50"
-                >
-                  Iniciar sesión
-                </NavLink>
-                <NavLink
-                  to="/register"
-                  onClick={closeAll}
-                  className="block rounded-lg bg-sky-600 px-3 py-3 text-center text-base font-medium text-white hover:bg-sky-700"
-                >
-                  Registrarse
-                </NavLink>
+                <SessionLinks onNavigate={closeAll} variant="mobile" />
               </div>
             </nav>
           </div>

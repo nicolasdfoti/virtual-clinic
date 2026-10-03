@@ -7,7 +7,7 @@ export function TeamSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
           eyebrow="Liderazgo"
-          title="El equipo detrás de SaludOnline"
+          title="El equipo detrás de Clínica Virtual"
           description="Médicos, ingenieros y especialistas en salud digital trabajando juntos para transformar el acceso a la atención médica."
         />
 

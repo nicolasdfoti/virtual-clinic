@@ -1,12 +1,24 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+
+import { useAuth } from '../context/useAuth'
+import { homeForRole } from '../routes/roleHome'
 
 function Login() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  // Si ProtectedRoute nos reboto, guarda donde queria ir el usuario. Si entro
+  // directo a /login no hay `from`, y se cae al home del rol.
+  const from = (location.state as { from?: string } | null)?.from
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     setError('')
@@ -16,10 +28,21 @@ function Login() {
       return
     }
 
-    console.log({
-      email,
-      password,
-    })
+    try {
+      setIsLoading(true)
+
+      const session = await login(email, password)
+
+      navigate(from ?? homeForRole(session.role), { replace: true })
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : 'No pudimos iniciar sesión. Intentá de nuevo.',
+      )
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -32,7 +55,7 @@ function Login() {
             to="/"
             className="text-2xl font-bold text-sky-900"
           >
-            Salud<span className="text-sky-600">Online</span>
+            Clínica <span className="text-sky-600">Virtual</span>
           </Link>
 
           <h1 className="mt-8 text-3xl font-bold text-sky-900">
@@ -62,6 +85,8 @@ function Login() {
             <input
               id="email"
               type="email"
+              autoComplete="email"
+              disabled={isLoading}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="tu@email.com"
@@ -81,6 +106,8 @@ function Login() {
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
+              disabled={isLoading}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
@@ -90,7 +117,10 @@ function Login() {
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div
+              className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600"
+              role="alert"
+            >
               {error}
             </div>
           )}
@@ -98,9 +128,10 @@ function Login() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full rounded-lg bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700"
+            disabled={isLoading}
+            className="w-full rounded-lg bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Iniciar sesión
+            {isLoading ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </button>
 
         </form>
