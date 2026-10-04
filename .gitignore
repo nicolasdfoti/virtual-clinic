@@ -1,5 +1,14 @@
 # Environment variables
-.env
+#
+# `.env*` cubre `.env`, `.env.local`, `.env.production`, `.envrc` y cualquier
+# variante, en cualquier carpeta. El patrón anterior era solo `.env`, así que
+# un `.env.production` con secretos reales habría quedado trackeado.
+#
+# `!.env.example` es la excepción obligatoria: los `.env.example` sí se
+# versionan (son la documentación de qué variables existen) y nunca llevan
+# valores reales, solo placeholders tipo `change_me`.
+.env*
+!.env.example
 
 # Python
 __pycache__/

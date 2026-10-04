@@ -1,0 +1,30 @@
+# Normalización de fin de línea.
+#
+# Por qué: sin esto, cada archivo versionado toma el CRLF de la máquina que lo
+# editó. En un repo que se trabaja en Windows (CRLF) y se commitea desde WSL
+# (LF), `git status` muestra decenas de archivos "modificados" que en realidad
+# no cambiaron ni un byte de contenido, y `git diff` reporta miles de líneas
+# basura. Eso tapa los cambios reales y hace riesgoso cualquier `git checkout`,
+# `git stash` o `git revert`.
+#
+# `text=auto` deja que Git detecte si el contenido es texto; `eol=lf` fuerza LF
+# en el repositorio para que todos tengan el mismo byte en disco.
+* text=auto eol=lf
+
+# Batch y PowerShell necesitan CRLF para ejecutarse en Windows. Sin esta
+# excepción, Git los guarda con LF y cmd.exe / powershell.exe los leen mal.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binarios: `binary` es la abreviatura de `-text -diff`, así que Git nunca
+# intenta convertirlos de fin de línea ni calcularles un diff legible.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.ico  binary
+*.pdf  binary
+*.woff2 binary
+
+# Nota: los `.svg` NO van acá. SVG es texto (XML) y sus diferencias son
+# legibles; declararlo binario solo esconde cambios reales.
