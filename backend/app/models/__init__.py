@@ -12,6 +12,7 @@ que acordarse de importar cada modulo a mano.
 from app.models.appointment import Appointment
 from app.models.audit_log import AuditLog
 from app.models.care_relationship import CareRelationship
+from app.models.clinical_note import ClinicalNote
 from app.models.doctor import Doctor
 from app.models.doctor_availability import DoctorAvailability
 from app.models.doctor_time_off import DoctorTimeOff
@@ -25,6 +26,7 @@ from app.models.enums import (
     PrescriptionStatus,
     Role,
 )
+from app.models.patient_file import PatientFile
 from app.models.prescription import MedicalOrder
 from app.models.patient_profile import PatientProfile
 from app.models.prescription import Prescription, PrescriptionItem
@@ -38,12 +40,14 @@ __all__ = [
     "AuditLog",
     "CareRelationship",
     "CareRelationshipStatus",
+    "ClinicalNote",
     "Doctor",
     "DoctorAvailability",
     "DoctorTimeOff",
     "MedicalOrder",
     "MedicalOrderStatus",
     "MedicalOrderType",
+    "PatientFile",
     "PatientProfile",
     "Prescription",
     "PrescriptionItem",

@@ -85,6 +85,22 @@ class Settings(BaseSettings):
         description="Directorio base para almacenar PDFs generados. Debe estar fuera de static/",
     )
 
+    # Visibilidad de la historia clinica para el paciente. Por defecto el
+    # paciente NO ve las notas del medico (dato sensible: la nota es material
+    # de trabajo clinico, no un resumen para el paciente). Se habilita por
+    # entorno cuando la clinica lo decide.
+    PATIENT_VISIBLE_NOTES: bool = Field(
+        default=False,
+        description="Si es True, el paciente puede listar y leer las notas clinicas.",
+    )
+
+    # Tamano maximo de los archivos que sube el paciente (en MB).
+    MAX_FILE_SIZE_MB: int = Field(
+        default=10,
+        gt=0,
+        description="Tamano maximo aceptado para PatientFile, en MB.",
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def reject_placeholder_secret(cls, value: str) -> str:

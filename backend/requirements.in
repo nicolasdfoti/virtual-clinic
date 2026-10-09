@@ -4,6 +4,9 @@ fastapi==0.142.2
 uvicorn[standard]==0.54.0
 SQLAlchemy==2.1.1
 alembic==1.20.0
+# Requerido por FastAPI para parsear multipart/form-data (subida de archivos).
+# Wheel pura (no compila extensiones).
+python-multipart==0.0.20
 psycopg[binary]==3.3.6
 pydantic==2.13.5
 pydantic-settings==2.15.0

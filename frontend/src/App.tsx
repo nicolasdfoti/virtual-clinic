@@ -33,6 +33,7 @@ import { BookAppointmentPage } from './features/appointment/BookAppointmentPage'
 import { PatientAppointmentsPage } from './features/appointment/PatientAppointmentsPage'
 import { PatientPrescriptionsPage } from './features/prescriptions/PatientPrescriptionsPage'
 import { PatientOrdersPage } from './features/prescriptions/PatientOrdersPage'
+import { PatientFilesPage } from './features/patient/PatientFilesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +110,7 @@ function App() {
                     <Route path="turnos/nuevo" element={<BookAppointmentPage />} />
                     <Route path="recetas" element={<PatientPrescriptionsPage />} />
                     <Route path="ordenes" element={<PatientOrdersPage />} />
+                    <Route path="estudios" element={<PatientFilesPage />} />
                   </Route>
 
                 {/* Médico. Un ADMIN con perfil médico también entra al panel:

@@ -11,7 +11,11 @@ from app.routers import (
     auth,
     doctor,
     doctor_availability,
+    doctor_clinical_notes,
+    doctor_patient_files,
     doctor_time_off,
+    patient_clinical_notes,
+    patient_files,
     patient_prescriptions,
     patients,
     public,
@@ -90,6 +94,26 @@ app.include_router(
 
 app.include_router(
     admin_prescriptions.router,
+    prefix="/api",
+)
+
+app.include_router(
+    doctor_clinical_notes.router,
+    prefix="/api",
+)
+
+app.include_router(
+    doctor_patient_files.router,
+    prefix="/api",
+)
+
+app.include_router(
+    patient_clinical_notes.router,
+    prefix="/api",
+)
+
+app.include_router(
+    patient_files.router,
     prefix="/api",
 )
 

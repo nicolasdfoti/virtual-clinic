@@ -1,7 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { toZonedTime } from 'date-fns-tz'
 import { forwardRef, useState, type TextareaHTMLAttributes } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { Link, useParams } from 'react-router-dom'
@@ -19,6 +16,9 @@ import {
   usePatientOrders,
   usePatientPrescriptions,
 } from './hooks'
+import { ClinicalNotesTab } from './ClinicalNotesTab'
+import { PatientFilesTab } from './PatientFilesTab'
+import { formatDateTime } from '../../lib/format'
 import {
   medicalOrderFormSchema,
   prescriptionFormSchema,
@@ -31,18 +31,11 @@ import type {
   Prescription,
 } from './types'
 
-const CLINIC_TZ = 'America/Argentina/Buenos_Aires'
-
-const TABS = ['Perfil', 'Recetas', 'Órdenes', 'Turnos'] as const
+const TABS = ['Perfil', 'Recetas', 'Órdenes', 'Turnos', 'Historia', 'Archivos'] as const
 type Tab = (typeof TABS)[number]
 
 function value(content: string | null): string {
   return content ?? '—'
-}
-
-function formatDateTime(dateStr: string): string {
-  const zoned = toZonedTime(new Date(dateStr), CLINIC_TZ)
-  return format(zoned, "d 'de' MMMM yyyy, HH:mm", { locale: es })
 }
 
 type TextAreaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
@@ -646,6 +639,8 @@ export function DoctorPatientDetailPage() {
               <OrdersTab patientId={id} orders={orders ?? []} isLoading={ordersLoading} />
             )}
             {tab === 'Turnos' && <AppointmentsTab patientId={id} />}
+            {tab === 'Historia' && <ClinicalNotesTab patientId={id} />}
+            {tab === 'Archivos' && <PatientFilesTab patientId={id} />}
           </Card>
         </>
       )}

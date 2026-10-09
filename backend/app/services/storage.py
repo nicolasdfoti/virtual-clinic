@@ -51,7 +51,9 @@ class StorageBackend:
         """
         if filename is None:
             filename = f"{uuid.uuid4()}.pdf"
-        elif not filename.endswith(".pdf"):
+        elif "." not in Path(filename).name:
+            # Sin extension explicita se asume PDF (comportamiento historico).
+            # Con extension se respeta: los archivos de paciente usan .jpg/.png.
             filename = f"{filename}.pdf"
 
         sha256 = hashlib.sha256(content).hexdigest()
