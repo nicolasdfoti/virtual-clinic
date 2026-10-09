@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import type { Professional } from '../../data/professionals';
-import { professionals } from '../../data/professionals';
 import { SectionHeader, Card, Avatar } from '../ui';
+import type { PublicDoctor } from '../../features/directory/types';
+import { usePublicDoctors } from '../../features/directory/usePublicDoctors';
 
 interface ProfessionalCardProps {
-  professional: Professional;
+  professional: PublicDoctor;
   featured?: boolean;
 }
 
@@ -20,10 +20,12 @@ export function ProfessionalCard({ professional, featured = false }: Professiona
         <div className="min-w-0">
           <h3 className="truncate font-bold text-sky-900">{professional.name}</h3>
           <p className="mt-1 text-sm text-slate-600">{professional.specialty}</p>
-          <p className="text-xs text-slate-500">Matrícula: {professional.licenseNumber}</p>
+          <p className="text-xs text-slate-500">Matrícula: {professional.license_number}</p>
         </div>
       </div>
-      <p className="mt-4 text-sm leading-relaxed text-slate-600">{professional.bio}</p>
+      {professional.bio && (
+        <p className="mt-4 text-sm leading-relaxed text-slate-600">{professional.bio}</p>
+      )}
     </Card>
   );
 }
@@ -48,7 +50,8 @@ export function ProfessionalsSection({
   title?: string;
   showViewAll?: boolean;
 }) {
-  const visible = professionals.slice(0, limit);
+  const { data, isLoading, isError } = usePublicDoctors();
+  const visible = (data ?? []).slice(0, limit);
 
   return (
     <section id="profesionales" className="bg-white py-16 sm:py-24">
@@ -73,7 +76,17 @@ export function ProfessionalsSection({
           )}
         </div>
 
-        {visible.length === 0 ? (
+        {isLoading ? (
+          <p role="status" className="mt-10 text-center text-slate-500">
+            Cargando profesionales…
+          </p>
+        ) : isError ? (
+          <Card variant="outlined" padding="lg" className="mx-auto max-w-2xl text-center">
+            <p role="alert" className="text-slate-600">
+              No pudimos cargar los profesionales. Recargá la página e intentá de nuevo.
+            </p>
+          </Card>
+        ) : visible.length === 0 ? (
           <div className="mt-10">
             <ProfessionalsEmptyState />
           </div>
@@ -84,7 +97,10 @@ export function ProfessionalsSection({
         ) : (
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((professional) => (
-              <ProfessionalCard key={professional.id} professional={professional} />
+              <ProfessionalCard
+                key={professional.license_number}
+                professional={professional}
+              />
             ))}
           </div>
         )}

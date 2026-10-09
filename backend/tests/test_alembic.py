@@ -74,6 +74,9 @@ def test_offline_upgrade_genera_el_esquema_de_doctors_y_users():
     assert "ix_patient_profiles_dni" in sql
     assert "insurance_provider" in sql
     assert "emergency_contact_phone" in sql
+    # Relacion administrativa con el medico asignado.
+    assert "assigned_doctor_id" in sql
+    assert "ix_patient_profiles_assigned_doctor_id" in sql
 
 
 @pytest.mark.skipif(

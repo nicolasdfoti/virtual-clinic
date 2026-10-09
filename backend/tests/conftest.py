@@ -49,7 +49,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import get_settings
-from app.core.security import hash_password
+from app.core.security import create_access_token, hash_password
 from app.database import Base, get_db
 from app.main import app
 from app.models.doctor import Doctor
@@ -121,6 +121,17 @@ def client(db_session):
         yield test_client
 
     app.dependency_overrides.clear()
+
+
+def login_as(client, user: User) -> None:
+    """Deja la cookie de sesion de `user` en el cliente de test."""
+    client.cookies.set(
+        "access_token",
+        create_access_token(
+            subject=str(user.id),
+            token_version=user.token_version,
+        ),
+    )
 
 
 def create_user(

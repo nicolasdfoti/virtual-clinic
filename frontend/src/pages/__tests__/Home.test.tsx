@@ -1,9 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { AuthProvider } from '../../context/AuthProvider'
-import { mockApi } from '../../test/testUtils'
+import { createTestQueryClient, mockApi } from '../../test/testUtils'
 import Home from '../Home'
 
 function renderHome() {
@@ -11,11 +12,13 @@ function renderHome() {
   mockApi(null)
 
   return render(
-    <AuthProvider>
-      <MemoryRouter>
-        <Home />
-      </MemoryRouter>
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <MemoryRouter>
+          <Home />
+        </MemoryRouter>
+      </AuthProvider>
+    </QueryClientProvider>,
   )
 }
 

@@ -19,6 +19,9 @@ import { PatientHome } from './pages/portal/PatientHome'
 import { PlaceholderPage } from './pages/portal/PlaceholderPage'
 import { ProfilePage } from './features/patient/ProfilePage'
 import { ChangePasswordPage } from './features/auth/ChangePasswordPage'
+import { AdminDashboard } from './features/admin/AdminDashboard'
+import { AdminDoctorsPage } from './features/admin/AdminDoctorsPage'
+import { AdminPatientsPage } from './features/admin/AdminPatientsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -111,10 +114,11 @@ function App() {
                   />
                 </Route>
 
-                {/* Médico */}
+                {/* Médico. Un ADMIN con perfil médico también entra al panel:
+                    la seguridad real la aplica el backend. */}
                 <Route
                   path="/app/medico"
-                  element={<ProtectedRoute allowedRoles={['DOCTOR']} />}
+                  element={<ProtectedRoute allowedRoles={['DOCTOR', 'ADMIN']} />}
                 >
                   <Route
                     index
@@ -137,20 +141,9 @@ function App() {
                   path="/app/admin"
                   element={<ProtectedRoute allowedRoles={['ADMIN']} />}
                 >
-                  <Route
-                    index
-                    element={
-                      <PlaceholderPage title="Panel de administración" description="Próximamente." />
-                    }
-                  />
-                  <Route
-                    path="medicos"
-                    element={<PlaceholderPage title="Médicos" description="Próximamente." />}
-                  />
-                  <Route
-                    path="pacientes"
-                    element={<PlaceholderPage title="Pacientes" description="Próximamente." />}
-                  />
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="medicos" element={<AdminDoctorsPage />} />
+                  <Route path="pacientes" element={<AdminPatientsPage />} />
                 </Route>
 
                 <Route path="/app/*" element={<Navigate to="/app" replace />} />

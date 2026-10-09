@@ -50,6 +50,38 @@ export function jsonResponse(
   })
 }
 
+export type FetchRoute = {
+  test: (url: string, method: string) => boolean
+  respond: (
+    url: string,
+    method: string,
+    init?: RequestInit,
+  ) => Response | Promise<Response>
+}
+
+/** Instala un fetch falso que resuelve por la primera ruta que matchea.
+ *  Util para endpoints con estado (admin) donde mockApi queda corto. */
+export function mockFetchRoutes(routes: FetchRoute[]) {
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : String(input)
+      const method = init?.method ?? 'GET'
+
+      for (const route of routes) {
+        if (route.test(url, method)) {
+          return route.respond(url, method, init)
+        }
+      }
+
+      return jsonResponse({ detail: 'Not found' }, { status: 404 })
+    },
+  )
+
+  vi.stubGlobal('fetch', fetchMock)
+
+  return fetchMock
+}
+
 export function emptyPatientProfile(userId: number): PatientProfile {
   return {
     id: null,
@@ -149,6 +181,10 @@ export function mockApi(
         }
 
         return new Response(null, { status: 204 })
+      }
+
+      if (url.endsWith('/public/doctors')) {
+        return jsonResponse([])
       }
 
       if (url.endsWith('/patients/me/profile')) {

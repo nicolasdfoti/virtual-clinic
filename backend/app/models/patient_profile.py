@@ -47,6 +47,15 @@ class PatientProfile(Base):
         nullable=True,
     )
 
+    # Medico asignado. Nullable porque un paciente puede no tener medico
+    # todavia (y porque el alta de turnos, que lo setea, llega despues). No
+    # expone datos de salud: es solo la relacion administrativa.
+    assigned_doctor_id: Mapped[int | None] = mapped_column(
+        ForeignKey("doctors.id"),
+        index=True,
+        nullable=True,
+    )
+
     birth_date: Mapped[date | None] = mapped_column(
         Date,
         nullable=True,

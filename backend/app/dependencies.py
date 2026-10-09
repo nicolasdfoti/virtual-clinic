@@ -15,6 +15,17 @@ INVALID_SESSION_DETAIL = "Sesión inválida o expirada."
 
 ROLE_FORBIDDEN_DETAIL = "No tenés permisos para esta acción."
 
+PASSWORD_CHANGE_REQUIRED_CODE = "PASSWORD_CHANGE_REQUIRED"
+
+# El code va para que el frontend pueda reconocer el caso; el message para el
+# usuario. FastAPI lo envuelve en {"detail": {...}}.
+PASSWORD_CHANGE_REQUIRED_DETAIL = {
+    "code": PASSWORD_CHANGE_REQUIRED_CODE,
+    "message": (
+        "Tenés que cambiar la contraseña temporal antes de usar el sistema."
+    ),
+}
+
 
 def get_current_user(
     access_token: str | None = Cookie(
@@ -79,9 +90,27 @@ def get_current_active_user(
     return current_user
 
 
+def get_current_ready_user(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """Usuario que ya puede operar: activo y sin clave temporal pendiente.
+
+    Mientras `must_change_password` sea true solo valen `/auth/me`, el cambio
+    de contraseña y el logout. Esos tres no usan esta dependencia a proposito;
+    todo lo demas la usa a traves de `require_roles`/`get_current_doctor`.
+    """
+    if current_user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=PASSWORD_CHANGE_REQUIRED_DETAIL,
+        )
+
+    return current_user
+
+
 def require_roles(*roles: Role):
-    """Factory de dependencia que exige que el usuario este autenticado y
-    activo y tenga alguno de `roles`.
+    """Factory de dependencia que exige que el usuario este autenticado, activo,
+    sin clave temporal pendiente y con alguno de `roles`.
 
     Se usa como `Depends(require_roles(Role.DOCTOR, Role.ADMIN))`. Un rol que
     no paga el corte es un 403: el recurso existe, el usuario no puede (la
@@ -89,7 +118,7 @@ def require_roles(*roles: Role):
     endpoint).
     """
 
-    def check_role(current_user: User = Depends(get_current_active_user)) -> User:
+    def check_role(current_user: User = Depends(get_current_ready_user)) -> User:
         if current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -102,7 +131,7 @@ def require_roles(*roles: Role):
 
 
 def get_current_doctor(
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_current_ready_user),
     db: Session = Depends(get_db),
 ) -> Doctor:
     """Doctor detras del usuario autenticado, si lo hay.
