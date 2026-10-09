@@ -23,6 +23,9 @@ export const PORTAL_NAV: Record<Role, PortalNavItem[]> = {
     { label: 'Panel', href: '/app/admin' },
     { label: 'Médicos', href: '/app/admin/medicos' },
     { label: 'Pacientes', href: '/app/admin/pacientes' },
+    { label: 'Recetas', href: '/app/admin/recetas' },
+    { label: 'Órdenes', href: '/app/admin/ordenes' },
+    { label: 'Actividad', href: '/app/admin/actividad' },
     { label: 'Auditoría', href: '/app/admin/auditoria' },
   ],
 }

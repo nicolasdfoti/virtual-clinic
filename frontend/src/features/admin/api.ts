@@ -1,15 +1,21 @@
 import api, { type PageParams, type Paginated } from '../../services/api'
 import type {
+  AdminMedicalOrder,
   AdminPatient,
   AdminPatientFilters,
+  AdminPrescription,
   AdminStats,
   AuditLogEntry,
   AuditLogFilters,
   Doctor,
+  DoctorActivity,
+  DoctorActivityFilters,
   DoctorCreated,
   DoctorInput,
   DoctorProfileInput,
   DoctorUpdateInput,
+  MedicalOrderFilters,
+  PrescriptionFilters,
 } from './types'
 
 /** Arma el query string del listado de pacientes con todos sus filtros. */
@@ -64,8 +70,92 @@ export function buildAuditQuery(
   return query ? `?${query}` : ''
 }
 
+export function buildPrescriptionQuery(
+  filters: PrescriptionFilters,
+  page: PageParams,
+): string {
+  const search = new URLSearchParams()
+
+  if (filters.q) search.set('q', filters.q)
+  if (filters.status) search.set('status', filters.status)
+  if (filters.from) search.set('from', filters.from)
+  if (filters.to) search.set('to', filters.to)
+
+  if (page.limit !== undefined) search.set('limit', String(page.limit))
+  if (page.offset !== undefined) search.set('offset', String(page.offset))
+
+  const query = search.toString()
+
+  return query ? `?${query}` : ''
+}
+
+export function buildMedicalOrderQuery(
+  filters: MedicalOrderFilters,
+  page: PageParams,
+): string {
+  const search = new URLSearchParams()
+
+  if (filters.q) search.set('q', filters.q)
+  if (filters.status) search.set('status', filters.status)
+  if (filters.type) search.set('type', filters.type)
+  if (filters.from) search.set('from', filters.from)
+  if (filters.to) search.set('to', filters.to)
+
+  if (page.limit !== undefined) search.set('limit', String(page.limit))
+  if (page.offset !== undefined) search.set('offset', String(page.offset))
+
+  const query = search.toString()
+
+  return query ? `?${query}` : ''
+}
+
+export function buildActivityQuery(
+  filters: DoctorActivityFilters,
+  page: PageParams,
+): string {
+  const search = new URLSearchParams()
+
+  if (filters.from) search.set('from', filters.from)
+  if (filters.to) search.set('to', filters.to)
+
+  if (page.limit !== undefined) search.set('limit', String(page.limit))
+  if (page.offset !== undefined) search.set('offset', String(page.offset))
+
+  const query = search.toString()
+
+  return query ? `?${query}` : ''
+}
+
 export function fetchAdminStats(): Promise<AdminStats> {
   return api.get<AdminStats>('/admin/stats')
+}
+
+export function fetchAdminPrescriptions(
+  filters: PrescriptionFilters,
+  page: PageParams,
+): Promise<Paginated<AdminPrescription>> {
+  return api.get<Paginated<AdminPrescription>>(
+    `/admin/prescriptions${buildPrescriptionQuery(filters, page)}`,
+  )
+}
+
+export function fetchAdminMedicalOrders(
+  filters: MedicalOrderFilters,
+  page: PageParams,
+): Promise<Paginated<AdminMedicalOrder>> {
+  return api.get<Paginated<AdminMedicalOrder>>(
+    `/admin/prescriptions/medical-orders${buildMedicalOrderQuery(filters, page)}`,
+  )
+}
+
+export function fetchDoctorActivity(
+  doctorId: number,
+  filters: DoctorActivityFilters,
+  page: PageParams,
+): Promise<Paginated<DoctorActivity>> {
+  return api.get<Paginated<DoctorActivity>>(
+    `/admin/prescriptions/doctors/${doctorId}/activity${buildActivityQuery(filters, page)}`,
+  )
 }
 
 export function fetchAuditLogs(

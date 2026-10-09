@@ -5,12 +5,14 @@ from app.core.config import get_settings
 from app.routers import (
     admin,
     admin_appointments,
+    admin_prescriptions,
     appointments,
     appointments_actions,
     auth,
     doctor,
     doctor_availability,
     doctor_time_off,
+    patient_prescriptions,
     patients,
     public,
     slots,
@@ -83,6 +85,16 @@ app.include_router(
 
 app.include_router(
     admin_appointments.router,
+    prefix="/api",
+)
+
+app.include_router(
+    admin_prescriptions.router,
+    prefix="/api",
+)
+
+app.include_router(
+    patient_prescriptions.router,
     prefix="/api",
 )
 

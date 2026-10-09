@@ -37,6 +37,32 @@ function detail(
   }
 }
 
+function baseRoutes(patient: DoctorPatientDetail | { detail: string }) {
+  const notFound = 'detail' in patient
+
+  return [
+    {
+      test: (url: string) => url.endsWith('/doctor/patients/5'),
+      respond: () =>
+        notFound
+          ? jsonResponse(patient, { status: 404 })
+          : jsonResponse(patient),
+    },
+    {
+      test: (url: string) => url.endsWith('/doctor/patients/5/prescriptions'),
+      respond: () => jsonResponse([]),
+    },
+    {
+      test: (url: string) => url.endsWith('/doctor/patients/5/orders'),
+      respond: () => jsonResponse([]),
+    },
+    {
+      test: (url: string) => url.endsWith('/appointments/mine'),
+      respond: () => jsonResponse([]),
+    },
+  ]
+}
+
 function renderPage() {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
@@ -54,12 +80,7 @@ function renderPage() {
 
 describe('DoctorPatientDetailPage', () => {
   it('muestra el perfil en solo lectura', async () => {
-    mockFetchRoutes([
-      {
-        test: (url) => url.includes('/doctor/patients/5'),
-        respond: () => jsonResponse(detail()),
-      },
-    ])
+    mockFetchRoutes(baseRoutes(detail()))
 
     renderPage()
 
@@ -69,28 +90,17 @@ describe('DoctorPatientDetailPage', () => {
   })
 
   it('marca el perfil incompleto', async () => {
-    mockFetchRoutes([
-      {
-        test: (url) => url.includes('/doctor/patients/5'),
-        respond: () =>
-          jsonResponse(detail({ is_complete: false, phone: null })),
-      },
-    ])
+    mockFetchRoutes(baseRoutes(detail({ is_complete: false, phone: null })))
 
     renderPage()
 
     expect(await screen.findByText('Perfil incompleto')).toBeInTheDocument()
   })
 
-  it('cambia de pestaña y muestra el aviso de próximamente', async () => {
+  it('muestra el estado vacío de recetas y abre el formulario', async () => {
     const user = userEvent.setup()
 
-    mockFetchRoutes([
-      {
-        test: (url) => url.includes('/doctor/patients/5'),
-        respond: () => jsonResponse(detail()),
-      },
-    ])
+    mockFetchRoutes(baseRoutes(detail()))
 
     renderPage()
 
@@ -99,18 +109,17 @@ describe('DoctorPatientDetailPage', () => {
     await user.click(screen.getByRole('tab', { name: 'Recetas' }))
 
     expect(
-      screen.getByText('La sección Recetas va a estar disponible próximamente.'),
+      await screen.findByText('No hay recetas emitidas para este paciente.'),
     ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Nueva receta' }))
+
+    expect(screen.getByLabelText('Medicamento')).toBeInTheDocument()
+    expect(screen.getByLabelText('Dosis (ej. 500 mg)')).toBeInTheDocument()
   })
 
   it('avisa cuando el paciente no está entre los atendidos', async () => {
-    mockFetchRoutes([
-      {
-        test: (url) => url.includes('/doctor/patients/5'),
-        respond: () =>
-          jsonResponse({ detail: 'No encontramos ese paciente.' }, { status: 404 }),
-      },
-    ])
+    mockFetchRoutes(baseRoutes({ detail: 'No encontramos ese paciente.' }))
 
     renderPage()
 

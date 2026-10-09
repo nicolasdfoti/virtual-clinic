@@ -49,6 +49,33 @@ class AppointmentModality(str, enum.Enum):
     IN_PERSON = "IN_PERSON"
 
 
+class PrescriptionStatus(str, enum.Enum):
+    """Estado de una receta/indicacion medica.
+
+    `ACTIVE` = vigente (se puede descargar y dispensar).
+    `CANCELLED` = anulada por el medico (con motivo).
+    """
+
+    ACTIVE = "ACTIVE"
+    CANCELLED = "CANCELLED"
+
+
+class MedicalOrderType(str, enum.Enum):
+    """Tipo de orden medica."""
+
+    LAB = "LAB"
+    IMAGING = "IMAGING"
+    REFERRAL = "REFERRAL"
+    OTHER = "OTHER"
+
+
+class MedicalOrderStatus(str, enum.Enum):
+    """Estado de una orden medica."""
+
+    ACTIVE = "ACTIVE"
+    CANCELLED = "CANCELLED"
+
+
 # Estados que ocupan la agenda. Un turno en uno de estos estados impide que se
 # reserve una franja superpuesta con el mismo medico.
 ACTIVE_APPOINTMENT_STATUSES = (

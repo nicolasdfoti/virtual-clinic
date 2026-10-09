@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Card } from '../../components/ui'
+import { useMyAppointments } from '../../features/appointment/hooks'
+import { useMyOrders, useMyPrescriptions } from '../../features/prescriptions/hooks'
 
 type QuickAccessItem = {
   label: string
@@ -45,36 +47,54 @@ const items: QuickAccessItem[] = [
   },
 ]
 
-/** Accesos rapidos del paciente. El contador sale de datos reales: sin
- *  endpoints todavia, arranca en 0 y no inventa numeros. */
+/** Accesos rápidos del paciente. Los contadores salen de datos reales; si la
+ *  consulta todavía no llegó, se muestra 0 (nunca se inventan números). */
 export function QuickAccess() {
+  const { data: appointments } = useMyAppointments()
+  const { data: prescriptions } = useMyPrescriptions()
+  const { data: orders } = useMyOrders()
+
+  const upcomingAppointments =
+    appointments?.filter((appointment) => new Date(appointment.starts_at) >= new Date())
+      .length ?? 0
+
+  const counts: Record<string, number> = {
+    Turnos: upcomingAppointments,
+    Recetas: prescriptions?.total ?? 0,
+    Órdenes: orders?.total ?? 0,
+  }
+
   return (
     <div className="grid gap-4 sm:grid-cols-3">
-      {items.map((item) => (
-        <Link key={item.href} to={item.href} className="block">
-          <Card
-            variant="interactive"
-            padding="md"
-            className="flex h-full items-center gap-4"
-          >
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
-              {item.icon}
-            </span>
+      {items.map((item) => {
+        const count = counts[item.label] ?? 0
 
-            <span className="min-w-0 flex-1">
-              <span className="block font-semibold text-sky-900">{item.label}</span>
-              <span className="block text-sm text-slate-500">{item.hint}</span>
-            </span>
-
-            <span
-              className="flex h-7 min-w-7 items-center justify-center rounded-full bg-slate-100 px-2 text-sm font-semibold text-slate-600"
-              aria-label={`${item.label}: 0 pendientes`}
+        return (
+          <Link key={item.href} to={item.href} className="block">
+            <Card
+              variant="interactive"
+              padding="md"
+              className="flex h-full items-center gap-4"
             >
-              0
-            </span>
-          </Card>
-        </Link>
-      ))}
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+                {item.icon}
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-sky-900">{item.label}</span>
+                <span className="block text-sm text-slate-500">{item.hint}</span>
+              </span>
+
+              <span
+                className="flex h-7 min-w-7 items-center justify-center rounded-full bg-slate-100 px-2 text-sm font-semibold text-slate-600"
+                aria-label={`${item.label}: ${count}`}
+              >
+                {count}
+              </span>
+            </Card>
+          </Link>
+        )
+      })}
     </div>
   )
 }

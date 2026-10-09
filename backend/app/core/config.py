@@ -71,6 +71,20 @@ class Settings(BaseSettings):
         gt=0,
     )
 
+    # Leyenda legal al pie de recetas/ordenes (configurable por entorno).
+    # Si no se setea, usa el valor por defecto "Indicacion medica".
+    PDF_FOOTER_LEGEND: str = Field(
+        default="Indicacion medica",
+        description="Texto al pie del PDF de recetas/ordenes. Ej: 'Receta electronica valida segun Ley 27.553'",
+    )
+
+    # Directorio de almacenamiento para PDFs (fuera de lo servido estaticamente).
+    # En Windows con Control de Aplicaciones, usar ruta absoluta sin espacios.
+    STORAGE_DIR: str = Field(
+        default="storage",
+        description="Directorio base para almacenar PDFs generados. Debe estar fuera de static/",
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def reject_placeholder_secret(cls, value: str) -> str:

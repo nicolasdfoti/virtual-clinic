@@ -20,9 +20,14 @@ from app.models.enums import (
     AppointmentModality,
     AppointmentStatus,
     CareRelationshipStatus,
+    MedicalOrderStatus,
+    MedicalOrderType,
+    PrescriptionStatus,
     Role,
 )
+from app.models.prescription import MedicalOrder
 from app.models.patient_profile import PatientProfile
+from app.models.prescription import Prescription, PrescriptionItem
 from app.models.user import User
 
 __all__ = [
@@ -36,7 +41,13 @@ __all__ = [
     "Doctor",
     "DoctorAvailability",
     "DoctorTimeOff",
+    "MedicalOrder",
+    "MedicalOrderStatus",
+    "MedicalOrderType",
     "PatientProfile",
+    "Prescription",
+    "PrescriptionItem",
+    "PrescriptionStatus",
     "Role",
     "User",
 ]

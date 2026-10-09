@@ -31,6 +31,24 @@ export function useDoctorPatient(id: number) {
   })
 }
 
+export function usePatientPrescriptions(patientId: number) {
+  return useQuery({
+    queryKey: ['doctor', 'patient', patientId, 'prescriptions'],
+    queryFn: () => doctorAppointmentApi.getPrescriptions(patientId),
+    enabled: !!patientId,
+    staleTime: 30_000,
+  })
+}
+
+export function usePatientOrders(patientId: number) {
+  return useQuery({
+    queryKey: ['doctor', 'patient', patientId, 'orders'],
+    queryFn: () => doctorAppointmentApi.getOrders(patientId),
+    enabled: !!patientId,
+    staleTime: 30_000,
+  })
+}
+
 export function useLinkPatient() {
   const queryClient = useQueryClient()
 
@@ -136,6 +154,48 @@ export function useNoShowAppointment() {
     mutationFn: (id: number) => doctorAppointmentApi.noShow(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doctor', 'appointments'] })
+    },
+  })
+}
+
+export function useCreatePrescription(patientId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: import('./types').CreatePrescriptionRequest) => doctorAppointmentApi.createPrescription(patientId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doctor', 'patient', patientId, 'prescriptions'] })
+    },
+  })
+}
+
+export function useCancelPrescription(patientId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ prescriptionId, reason }: { prescriptionId: number; reason: string }) =>
+      doctorAppointmentApi.cancelPrescription(patientId, prescriptionId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doctor', 'patient', patientId, 'prescriptions'] })
+    },
+  })
+}
+
+export function useCreateOrder(patientId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: import('./types').CreateMedicalOrderRequest) => doctorAppointmentApi.createOrder(patientId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doctor', 'patient', patientId, 'orders'] })
+    },
+  })
+}
+
+export function useCancelOrder(patientId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ orderId, reason }: { orderId: number; reason: string }) =>
+      doctorAppointmentApi.cancelOrder(patientId, orderId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doctor', 'patient', patientId, 'orders'] })
     },
   })
 }

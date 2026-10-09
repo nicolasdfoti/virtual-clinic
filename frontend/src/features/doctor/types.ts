@@ -82,3 +82,79 @@ export type DoctorTimeOff = {
   reason: string | null
   created_at: string
 }
+
+/** Tipos para recetas/indicaciones medicas */
+
+export type PrescriptionStatus = 'ACTIVE' | 'CANCELLED'
+
+export type PrescriptionItem = {
+  id: number
+  prescription_id: number
+  medication: string
+  dose: string
+  frequency: string
+  duration: string
+  instructions: string | null
+  created_at: string
+}
+
+export type Prescription = {
+  id: number
+  folio: string
+  patient_id: number
+  doctor_id: number
+  appointment_id: number | null
+  issued_at: string
+  status: PrescriptionStatus
+  cancel_reason: string | null
+  items: PrescriptionItem[]
+  created_at: string
+}
+
+export type CreatePrescriptionRequest = {
+  patient_id: number
+  appointment_id?: number
+  items: Array<{
+    medication: string
+    dose: string
+    frequency: string
+    duration: string
+    instructions?: string | null
+  }>
+}
+
+export type CreatePrescriptionItem = {
+  medication: string
+  dose: string
+  frequency: string
+  duration: string
+  instructions?: string | null
+}
+
+/** Tipos para ordenes medicas */
+
+export type MedicalOrderStatus = 'ACTIVE' | 'CANCELLED'
+export type MedicalOrderType = 'LAB' | 'IMAGING' | 'REFERRAL' | 'OTHER'
+
+export type MedicalOrder = {
+  id: number
+  folio: string
+  patient_id: number
+  doctor_id: number
+  appointment_id: number | null
+  type: MedicalOrderType
+  studies: string
+  presumptive_diagnosis: string | null
+  issued_at: string
+  status: MedicalOrderStatus
+  cancel_reason: string | null
+  created_at: string
+}
+
+export type CreateMedicalOrderRequest = {
+  patient_id: number
+  appointment_id?: number
+  type: MedicalOrderType
+  studies: string
+  presumptive_diagnosis?: string | null
+}

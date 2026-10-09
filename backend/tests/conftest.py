@@ -7,6 +7,7 @@ En Windows/develop se espera exportarla apuntando a Postgres:
     TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/test_db
 """
 import os
+import tempfile
 
 
 # Tiene que existir un SECRET_KEY valido (>=32 chars) antes de que se importe
@@ -15,6 +16,12 @@ os.environ.setdefault("SECRET_KEY", "test-only-secret-key-not-used-anywhere")
 os.environ.setdefault("ENVIRONMENT", "testing")
 os.environ.setdefault("COOKIE_SECURE", "false")
 os.environ.setdefault("SQL_ECHO", "false")
+
+# Los PDFs de recetas/ordenes no ensucian el repo: en tests van a un temporal.
+os.environ.setdefault(
+    "STORAGE_DIR",
+    os.path.join(tempfile.gettempdir(), "virtual-clinic-test-storage"),
+)
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 

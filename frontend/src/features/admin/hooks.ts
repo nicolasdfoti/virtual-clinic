@@ -5,18 +5,24 @@ import {
   createDoctor,
   enableDoctorProfile,
   fetchAdminDoctors,
+  fetchAdminMedicalOrders,
   fetchAdminPatients,
+  fetchAdminPrescriptions,
   fetchAdminStats,
   fetchAuditLogs,
+  fetchDoctorActivity,
   setDoctorActive,
   updateDoctor,
 } from './api'
 import type {
   AdminPatientFilters,
   AuditLogFilters,
+  DoctorActivityFilters,
   DoctorInput,
   DoctorProfileInput,
   DoctorUpdateInput,
+  MedicalOrderFilters,
+  PrescriptionFilters,
 } from './types'
 
 export const adminStatsKey = ['admin', 'stats'] as const
@@ -27,6 +33,19 @@ export const adminPatientsKey = (
 ) => ['admin', 'patients', filters, page] as const
 export const adminAuditKey = (filters: AuditLogFilters, page: PageParams) =>
   ['admin', 'audit', filters, page] as const
+export const adminPrescriptionsKey = (
+  filters: PrescriptionFilters,
+  page: PageParams,
+) => ['admin', 'prescriptions', filters, page] as const
+export const adminMedicalOrdersKey = (
+  filters: MedicalOrderFilters,
+  page: PageParams,
+) => ['admin', 'medical-orders', filters, page] as const
+export const doctorActivityKey = (
+  doctorId: number,
+  filters: DoctorActivityFilters,
+  page: PageParams,
+) => ['admin', 'doctor-activity', doctorId, filters, page] as const
 
 export function useAdminStats() {
   return useQuery({ queryKey: adminStatsKey, queryFn: fetchAdminStats })
@@ -50,6 +69,38 @@ export function useAuditLogs(filters: AuditLogFilters, page: PageParams) {
   return useQuery({
     queryKey: adminAuditKey(filters, page),
     queryFn: () => fetchAuditLogs(filters, page),
+  })
+}
+
+export function useAdminPrescriptions(
+  filters: PrescriptionFilters,
+  page: PageParams,
+) {
+  return useQuery({
+    queryKey: adminPrescriptionsKey(filters, page),
+    queryFn: () => fetchAdminPrescriptions(filters, page),
+  })
+}
+
+export function useAdminMedicalOrders(
+  filters: MedicalOrderFilters,
+  page: PageParams,
+) {
+  return useQuery({
+    queryKey: adminMedicalOrdersKey(filters, page),
+    queryFn: () => fetchAdminMedicalOrders(filters, page),
+  })
+}
+
+export function useDoctorActivity(
+  doctorId: number | undefined,
+  filters: DoctorActivityFilters,
+  page: PageParams,
+) {
+  return useQuery({
+    queryKey: doctorActivityKey(doctorId ?? 0, filters, page),
+    queryFn: () => fetchDoctorActivity(doctorId as number, filters, page),
+    enabled: doctorId !== undefined,
   })
 }
 

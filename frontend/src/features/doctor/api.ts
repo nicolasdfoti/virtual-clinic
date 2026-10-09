@@ -1,5 +1,16 @@
 import { api } from '../../services/api'
-import type { DoctorAppointment, DoctorAvailability, DoctorTimeOff, DoctorPatient, DoctorPatientDetail, LinkPatientInput } from './types'
+import type { 
+  DoctorAppointment, 
+  DoctorAvailability, 
+  DoctorTimeOff, 
+  DoctorPatient, 
+  DoctorPatientDetail, 
+  LinkPatientInput,
+  Prescription,
+  MedicalOrder,
+  CreatePrescriptionRequest,
+  CreateMedicalOrderRequest,
+} from './types'
 
 export function fetchDoctorPatients(q: string, page: { limit?: number; offset?: number } = {}): Promise<{ items: DoctorPatient[]; total: number; limit: number; offset: number }> {
   const params = new URLSearchParams()
@@ -51,4 +62,24 @@ export const doctorAppointmentApi = {
 
   deleteTimeOff: (id: number): Promise<void> =>
     api.delete<void>(`/doctor/time-off/${id}`),
+
+  // Recetas
+  getPrescriptions: (patientId: number): Promise<Prescription[]> =>
+    api.get<Prescription[]>(`/doctor/patients/${patientId}/prescriptions`),
+
+  createPrescription: (patientId: number, data: CreatePrescriptionRequest): Promise<Prescription> =>
+    api.post<Prescription>(`/doctor/patients/${patientId}/prescriptions`, data),
+
+  cancelPrescription: (patientId: number, prescriptionId: number, reason: string): Promise<Prescription> =>
+    api.patch<Prescription>(`/doctor/patients/${patientId}/prescriptions/${prescriptionId}/cancel`, { cancel_reason: reason }),
+
+  // Ordenes medicas
+  getOrders: (patientId: number): Promise<MedicalOrder[]> =>
+    api.get<MedicalOrder[]>(`/doctor/patients/${patientId}/orders`),
+
+  createOrder: (patientId: number, data: CreateMedicalOrderRequest): Promise<MedicalOrder> =>
+    api.post<MedicalOrder>(`/doctor/patients/${patientId}/orders`, data),
+
+  cancelOrder: (patientId: number, orderId: number, reason: string): Promise<MedicalOrder> =>
+    api.patch<MedicalOrder>(`/doctor/patients/${patientId}/orders/${orderId}/cancel`, { cancel_reason: reason }),
 }

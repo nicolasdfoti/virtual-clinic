@@ -1,6 +1,13 @@
 const API_URL =
   import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
+/** URL absoluta de un endpoint de la API. Para enlaces directos que no pasan
+ *  por `fetch` (por ejemplo las descargas de PDF, que viajan con la cookie de
+ *  sesion y no con JSON). */
+export function apiFileUrl(endpoint: string): string {
+  return `${API_URL}${endpoint}`
+}
+
 const DEFAULT_ERROR_MESSAGE = 'Ocurrió un error en la solicitud.'
 
 const NETWORK_ERROR_MESSAGE =

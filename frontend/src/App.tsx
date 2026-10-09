@@ -16,12 +16,14 @@ import FAQ from './pages/FAQ'
 import Contact from './pages/Contact'
 import { TermsPage, PrivacyPage } from './pages/Legal'
 import { PatientHome } from './pages/portal/PatientHome'
-import { PlaceholderPage } from './pages/portal/PlaceholderPage'
 import { ProfilePage } from './features/patient/ProfilePage'
 import { ChangePasswordPage } from './features/auth/ChangePasswordPage'
 import { AdminDashboard } from './features/admin/AdminDashboard'
 import { AdminDoctorsPage } from './features/admin/AdminDoctorsPage'
 import { AdminPatientsPage } from './features/admin/AdminPatientsPage'
+import { AdminPrescriptionsPage } from './features/admin/AdminPrescriptionsPage'
+import { AdminMedicalOrdersPage } from './features/admin/AdminMedicalOrdersPage'
+import { AdminActivityPage } from './features/admin/AdminActivityPage'
 import { AuditLogPage } from './features/admin/AuditLogPage'
 import { DoctorDashboard } from './features/doctor/DoctorDashboard'
 import { DoctorPatientDetailPage } from './features/doctor/DoctorPatientDetailPage'
@@ -29,6 +31,8 @@ import { DoctorAgendaPage } from './features/doctor/DoctorAgendaPage'
 import { DoctorAppointmentDetailPage } from './features/doctor/DoctorAppointmentDetailPage'
 import { BookAppointmentPage } from './features/appointment/BookAppointmentPage'
 import { PatientAppointmentsPage } from './features/appointment/PatientAppointmentsPage'
+import { PatientPrescriptionsPage } from './features/prescriptions/PatientPrescriptionsPage'
+import { PatientOrdersPage } from './features/prescriptions/PatientOrdersPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,18 +107,8 @@ function App() {
                     <Route path="perfil" element={<ProfilePage />} />
                     <Route path="turnos" element={<PatientAppointmentsPage />} />
                     <Route path="turnos/nuevo" element={<BookAppointmentPage />} />
-                    <Route
-                      path="recetas"
-                      element={
-                        <PlaceholderPage title="Recetas" description="Tus recetas van a estar acá. Próximamente." />
-                      }
-                    />
-                    <Route
-                      path="ordenes"
-                      element={
-                        <PlaceholderPage title="Órdenes" description="Tus órdenes y estudios van a estar acá. Próximamente." />
-                      }
-                    />
+                    <Route path="recetas" element={<PatientPrescriptionsPage />} />
+                    <Route path="ordenes" element={<PatientOrdersPage />} />
                   </Route>
 
                 {/* Médico. Un ADMIN con perfil médico también entra al panel:
@@ -149,6 +143,9 @@ function App() {
                   <Route index element={<AdminDashboard />} />
                   <Route path="medicos" element={<AdminDoctorsPage />} />
                   <Route path="pacientes" element={<AdminPatientsPage />} />
+                  <Route path="recetas" element={<AdminPrescriptionsPage />} />
+                  <Route path="ordenes" element={<AdminMedicalOrdersPage />} />
+                  <Route path="actividad" element={<AdminActivityPage />} />
                   <Route path="auditoria" element={<AuditLogPage />} />
                 </Route>
 

@@ -6,8 +6,9 @@ from app.database import get_db
 from app.dependencies import get_current_doctor
 from app.models.care_relationship import CareRelationship
 from app.models.doctor import Doctor
-from app.models.enums import CareRelationshipStatus, Role
+from app.models.enums import CareRelationshipStatus, MedicalOrderStatus, MedicalOrderType, PrescriptionStatus, Role
 from app.models.patient_profile import PatientProfile
+from app.models.prescription import Prescription, PrescriptionItem, MedicalOrder
 from app.models.user import User
 from app.schemas.doctor_patient import (
     DoctorAppointmentDetail,
@@ -17,7 +18,15 @@ from app.schemas.doctor_patient import (
     DoctorPatientListResponse,
     LinkPatientRequest,
 )
-from app.services import audit
+from app.schemas.prescription import (
+    MedicalOrderCancelRequest,
+    MedicalOrderCreate,
+    MedicalOrderResponse,
+    PrescriptionCancelRequest,
+    PrescriptionCreate,
+    PrescriptionResponse,
+)
+from app.services import audit, prescriptions
 
 
 router = APIRouter(
@@ -368,3 +377,314 @@ def get_appointment_detail(
         cancel_reason=appt.cancel_reason,
         created_at=appt.created_at,
     )
+
+
+# --- Recetas / Indicaciones medicas ---
+
+
+@router.post(
+    "/patients/{patient_id}/prescriptions",
+    response_model=PrescriptionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_prescription(
+    patient_id: int,
+    payload: PrescriptionCreate,
+    request: Request,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Emite una receta/indicacion medica para un paciente.
+
+    Requiere relacion ACTIVE. Genera PDF y lo almacena.
+    """
+    # Verificar relacion activa
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenes relacion activa con ese paciente.",
+        )
+
+    patient = db.get(User, patient_id)
+    if not patient or patient.role != Role.PATIENT:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Paciente no encontrado.",
+        )
+
+    profile = (
+        db.query(PatientProfile)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+
+    try:
+        prescription = prescriptions.create_prescription(
+            db=db,
+            doctor=doctor,
+            patient=patient,
+            patient_profile=profile,
+            items=[item.model_dump() for item in payload.items],
+            appointment_id=payload.appointment_id,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    audit.log(
+        db,
+        actor_user_id=doctor.user_id,
+        action="prescription_created",
+        entity_type="prescription",
+        entity_id=prescription.id,
+        ip=audit.client_ip(request),
+        metadata={"patient_id": patient_id, "folio": prescription.folio},
+    )
+
+    return prescription
+
+
+@router.get(
+    "/patients/{patient_id}/prescriptions",
+    response_model=list[PrescriptionResponse],
+)
+def list_patient_prescriptions(
+    patient_id: int,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Lista recetas emitidas por este medico para un paciente."""
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenes relacion activa con ese paciente.",
+        )
+
+    rows = (
+        db.query(Prescription)
+        .filter(
+            Prescription.doctor_id == doctor.id,
+            Prescription.patient_id == patient_id,
+        )
+        .order_by(Prescription.issued_at.desc())
+        .all()
+    )
+
+    return rows
+
+
+@router.patch(
+    "/patients/{patient_id}/prescriptions/{prescription_id}/cancel",
+    response_model=PrescriptionResponse,
+)
+def cancel_prescription(
+    patient_id: int,
+    prescription_id: int,
+    payload: PrescriptionCancelRequest,
+    request: Request,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Anula una receta emitida por este medico."""
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenes relacion activa con ese paciente.",
+        )
+
+    prescription = db.get(Prescription, prescription_id)
+
+    if not prescription or prescription.doctor_id != doctor.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No encontramos esa receta.",
+        )
+
+    if prescription.patient_id != patient_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Esa receta no pertenece a este paciente.",
+        )
+
+    try:
+        prescription = prescriptions.cancel_prescription(
+            db=db,
+            prescription=prescription,
+            cancel_reason=payload.cancel_reason,
+            actor_user_id=doctor.user_id,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    audit.log(
+        db,
+        actor_user_id=doctor.user_id,
+        action="prescription_cancelled",
+        entity_type="prescription",
+        entity_id=prescription.id,
+        ip=audit.client_ip(request),
+        metadata={"folio": prescription.folio, "reason": payload.cancel_reason},
+    )
+
+    return prescription
+
+
+# --- Ordenes medicas ---
+
+
+@router.post(
+    "/patients/{patient_id}/orders",
+    response_model=MedicalOrderResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_medical_order(
+    patient_id: int,
+    payload: MedicalOrderCreate,
+    request: Request,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Emite una orden medica (laboratorio, imagenes, interconsulta, otros).
+
+    Requiere relacion ACTIVE. Genera PDF y lo almacena.
+    """
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenes relacion activa con ese paciente.",
+        )
+
+    patient = db.get(User, patient_id)
+    if not patient or patient.role != Role.PATIENT:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Paciente no encontrado.",
+        )
+
+    profile = (
+        db.query(PatientProfile)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+
+    try:
+        order = prescriptions.create_medical_order(
+            db=db,
+            doctor=doctor,
+            patient=patient,
+            patient_profile=profile,
+            type_=payload.type,
+            studies=payload.studies,
+            presumptive_diagnosis=payload.presumptive_diagnosis,
+            appointment_id=payload.appointment_id,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    audit.log(
+        db,
+        actor_user_id=doctor.user_id,
+        action="medical_order_created",
+        entity_type="medical_order",
+        entity_id=order.id,
+        ip=audit.client_ip(request),
+        metadata={"patient_id": patient_id, "folio": order.folio, "type": payload.type},
+    )
+
+    return order
+
+
+@router.get(
+    "/patients/{patient_id}/orders",
+    response_model=list[MedicalOrderResponse],
+)
+def list_patient_orders(
+    patient_id: int,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Lista ordenes emitidas por este medico para un paciente."""
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenes relacion activa con ese paciente.",
+        )
+
+    rows = (
+        db.query(MedicalOrder)
+        .filter(
+            MedicalOrder.doctor_id == doctor.id,
+            MedicalOrder.patient_id == patient_id,
+        )
+        .order_by(MedicalOrder.issued_at.desc())
+        .all()
+    )
+
+    return rows
+
+
+@router.patch(
+    "/patients/{patient_id}/orders/{order_id}/cancel",
+    response_model=MedicalOrderResponse,
+)
+def cancel_medical_order(
+    patient_id: int,
+    order_id: int,
+    payload: MedicalOrderCancelRequest,
+    request: Request,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Anula una orden medica emitida por este medico."""
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tenes relacion activa con ese paciente.",
+        )
+
+    order = db.get(MedicalOrder, order_id)
+
+    if not order or order.doctor_id != doctor.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No encontramos esa orden.",
+        )
+
+    if order.patient_id != patient_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Esa orden no pertenece a este paciente.",
+        )
+
+    try:
+        order = prescriptions.cancel_medical_order(
+            db=db,
+            order=order,
+            cancel_reason=payload.cancel_reason,
+            actor_user_id=doctor.user_id,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    audit.log(
+        db,
+        actor_user_id=doctor.user_id,
+        action="medical_order_cancelled",
+        entity_type="medical_order",
+        entity_id=order.id,
+        ip=audit.client_ip(request),
+        metadata={"folio": order.folio, "reason": payload.cancel_reason},
+    )
+
+    return order

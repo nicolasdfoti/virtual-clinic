@@ -91,3 +91,61 @@ export type AuditLogFilters = {
   created_from?: string
   created_to?: string
 }
+
+export type AdminPrescription = {
+  id: number
+  folio: string
+  doctor_id: number
+  doctor_name: string | null
+  patient_id: number
+  patient_name: string | null
+  patient_dni: string | null
+  issued_at: string
+  status: 'ACTIVE' | 'CANCELLED'
+  cancel_reason: string | null
+  item_count: number
+}
+
+export type AdminMedicalOrder = {
+  id: number
+  folio: string
+  doctor_id: number
+  doctor_name: string | null
+  patient_id: number
+  patient_name: string | null
+  patient_dni: string | null
+  type: 'LAB' | 'IMAGING' | 'REFERRAL' | 'OTHER'
+  issued_at: string
+  status: 'ACTIVE' | 'CANCELLED'
+  cancel_reason: string | null
+}
+
+export type PrescriptionFilters = {
+  q?: string
+  status?: 'ACTIVE' | 'CANCELLED'
+  from?: string
+  to?: string
+}
+
+export type MedicalOrderFilters = {
+  q?: string
+  status?: 'ACTIVE' | 'CANCELLED'
+  type?: AdminMedicalOrder['type']
+  from?: string
+  to?: string
+}
+
+export type DoctorActivity = {
+  doctor_id: number
+  doctor_name: string
+  prescriptions_issued: number
+  prescriptions_cancelled: number
+  orders_issued: number
+  orders_cancelled: number
+  patients_attended: number
+}
+
+export type DoctorActivityFilters = {
+  from?: string
+  to?: string
+}
