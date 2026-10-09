@@ -33,6 +33,7 @@ def list_public_doctors(db: Session = Depends(get_db)):
 
     return [
         PublicDoctorResponse(
+            id=doctor.id,
             name=f"{user.first_name} {user.last_name}".strip(),
             specialty=doctor.specialty,
             license_number=doctor.license_number,

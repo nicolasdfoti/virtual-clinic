@@ -88,6 +88,11 @@ def test_offline_upgrade_genera_el_esquema_de_doctors_y_users():
     assert "ix_audit_logs_action" in sql
     assert "ix_audit_logs_entity_type" in sql
     assert "ix_audit_logs_created_at" in sql
+    # Agenda y turnos.
+    assert "doctor_availabilities" in sql
+    assert "doctor_time_off" in sql
+    assert "appointments" in sql
+    assert "exclude_active_appointments" in sql
 
 
 @pytest.mark.skipif(

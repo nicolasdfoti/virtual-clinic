@@ -38,19 +38,26 @@ class LinkPatientRequest(BaseModel):
         return self
 
 
-class DoctorPatientListItem(BaseModel):
-    """Fila del listado de pacientes del medico.
+class DoctorNextAppointment(BaseModel):
+    """Proximo turno del paciente con este medico."""
 
-    `next_appointment` queda en None hasta que exista la agenda: no se inventa
-    un turno que la plataforma todavia no agenda.
-    """
+    id: int
+    starts_at: datetime
+    ends_at: datetime
+    modality: str
+    status: str
+    reason: str | None = None
+
+
+class DoctorPatientListItem(BaseModel):
+    """Fila del listado de pacientes del medico."""
 
     id: int
     first_name: str
     last_name: str
     dni: str | None = None
     insurance_provider: str | None = None
-    next_appointment: datetime | None = None
+    next_appointment: DoctorNextAppointment | None = None
 
 
 class DoctorPatientListResponse(BaseModel):
@@ -58,6 +65,24 @@ class DoctorPatientListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+class DoctorAppointmentDetail(BaseModel):
+    """Detalle de un turno para el medico."""
+
+    id: int
+    patient_id: int
+    patient_name: str | None = None
+    patient_dni: str | None = None
+    starts_at: datetime
+    ends_at: datetime
+    status: str
+    modality: str
+    reason: str | None = None
+    video_url: str | None = None
+    cancelled_by: int | None = None
+    cancel_reason: str | None = None
+    created_at: datetime
 
 
 class DoctorPatientDetail(BaseModel):

@@ -1,6 +1,6 @@
-/** Espejo de PublicDoctorResponse del backend. El directorio publico no expone
- *  ids ni datos de contacto: solo nombre, especialidad, matricula y bio. */
+/** Espejo de PublicDoctorResponse del backend. Incluye id para reserva de turnos. */
 export type PublicDoctor = {
+  id: number
   name: string
   specialty: string
   license_number: string

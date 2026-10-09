@@ -7,7 +7,7 @@ from tests.conftest import create_doctor, create_user
 
 PUBLIC_PATH = "/api/public/doctors"
 
-ALLOWED_FIELDS = {"name", "specialty", "license_number", "bio"}
+ALLOWED_FIELDS = {"id", "name", "specialty", "license_number", "bio"}
 
 
 def test_sin_sesion_devuelve_medicos_activos(client, db_session, doctor_user):
@@ -58,4 +58,3 @@ def test_no_expone_datos_personales(client, db_session, doctor_user):
     assert set(item.keys()) == ALLOWED_FIELDS
     assert "email" not in item
     assert "user_id" not in item
-    assert "id" not in item

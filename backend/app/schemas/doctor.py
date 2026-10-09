@@ -193,9 +193,10 @@ class DoctorCreatedResponse(DoctorResponse):
 
 
 class PublicDoctorResponse(BaseModel):
-    """Lo unico visible sin autenticacion. Sin ids, sin email, sin telefono:
-    solo lo que hace falta para presentar al profesional."""
+    """Lo unico visible sin autenticacion. Incluye id para reserva de turnos.
+    Sin email, sin telefono: solo lo que hace falta para presentar al profesional."""
 
+    id: int
     name: str
     specialty: str
     license_number: str

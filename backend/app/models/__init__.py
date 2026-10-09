@@ -9,18 +9,33 @@ cambios.
 Importar los modelos aca es la forma de que quien use `Base.metadata` no tenga
 que acordarse de importar cada modulo a mano.
 """
+from app.models.appointment import Appointment
 from app.models.audit_log import AuditLog
 from app.models.care_relationship import CareRelationship
 from app.models.doctor import Doctor
-from app.models.enums import CareRelationshipStatus, Role
+from app.models.doctor_availability import DoctorAvailability
+from app.models.doctor_time_off import DoctorTimeOff
+from app.models.enums import (
+    ACTIVE_APPOINTMENT_STATUSES,
+    AppointmentModality,
+    AppointmentStatus,
+    CareRelationshipStatus,
+    Role,
+)
 from app.models.patient_profile import PatientProfile
 from app.models.user import User
 
 __all__ = [
+    "ACTIVE_APPOINTMENT_STATUSES",
+    "Appointment",
+    "AppointmentModality",
+    "AppointmentStatus",
     "AuditLog",
     "CareRelationship",
     "CareRelationshipStatus",
     "Doctor",
+    "DoctorAvailability",
+    "DoctorTimeOff",
     "PatientProfile",
     "Role",
     "User",

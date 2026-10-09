@@ -1,35 +1,54 @@
-import api, { type PageParams, type Paginated } from '../../services/api'
-import type {
-  DoctorPatient,
-  DoctorPatientDetail,
-  LinkPatientInput,
-} from './types'
+import { api } from '../../services/api'
+import type { DoctorAppointment, DoctorAvailability, DoctorTimeOff, DoctorPatient, DoctorPatientDetail, LinkPatientInput } from './types'
 
-function buildQuery(q: string, page: PageParams): string {
-  const search = new URLSearchParams()
-
-  if (q.trim()) search.set('q', q.trim())
-  if (page.limit !== undefined) search.set('limit', String(page.limit))
-  if (page.offset !== undefined) search.set('offset', String(page.offset))
-
-  const query = search.toString()
-
-  return query ? `?${query}` : ''
-}
-
-export function fetchDoctorPatients(
-  q: string,
-  page: PageParams,
-): Promise<Paginated<DoctorPatient>> {
-  return api.get<Paginated<DoctorPatient>>(
-    `/doctor/patients${buildQuery(q, page)}`,
-  )
+export function fetchDoctorPatients(q: string, page: { limit?: number; offset?: number } = {}): Promise<{ items: DoctorPatient[]; total: number; limit: number; offset: number }> {
+  const params = new URLSearchParams()
+  if (q) params.set('q', q)
+  if (page.limit !== undefined) params.set('limit', String(page.limit))
+  if (page.offset !== undefined) params.set('offset', String(page.offset))
+  const query = params.toString()
+  return api.get<{ items: DoctorPatient[]; total: number; limit: number; offset: number }>(`/doctor/patients${query ? `?${query}` : ''}`)
 }
 
 export function fetchDoctorPatient(id: number): Promise<DoctorPatientDetail> {
   return api.get<DoctorPatientDetail>(`/doctor/patients/${id}`)
 }
 
-export function linkPatient(input: LinkPatientInput): Promise<DoctorPatient> {
-  return api.post<DoctorPatient>('/doctor/patients', input)
+export function linkPatient(input: LinkPatientInput): Promise<DoctorPatientDetail> {
+  return api.post<DoctorPatientDetail>('/doctor/patients', input)
+}
+
+export const doctorAppointmentApi = {
+  getMine: (): Promise<DoctorAppointment[]> =>
+    api.get<DoctorAppointment[]>('/appointments/mine'),
+
+  getDetail: (id: number): Promise<DoctorAppointment> =>
+    api.get<DoctorAppointment>(`/doctor/appointments/${id}`),
+
+  cancel: (id: number, reason?: string): Promise<{ id: number; status: string }> =>
+    api.patch<{ id: number; status: string }>(`/appointments/${id}/cancel`, { reason }),
+
+  complete: (id: number): Promise<{ id: number; status: string }> =>
+    api.patch<{ id: number; status: string }>(`/appointments/${id}/complete`),
+
+  noShow: (id: number): Promise<{ id: number; status: string }> =>
+    api.patch<{ id: number; status: string }>(`/appointments/${id}/no-show`),
+
+  getAvailability: (): Promise<DoctorAvailability[]> =>
+    api.get<DoctorAvailability[]>('/doctor/availability'),
+
+  createAvailability: (data: { weekday: number; start_time: string; end_time: string }): Promise<DoctorAvailability> =>
+    api.post<DoctorAvailability>('/doctor/availability', data),
+
+  deleteAvailability: (id: number): Promise<void> =>
+    api.delete<void>(`/doctor/availability/${id}`),
+
+  getTimeOff: (): Promise<DoctorTimeOff[]> =>
+    api.get<DoctorTimeOff[]>('/doctor/time-off'),
+
+  createTimeOff: (data: { starts_at: string; ends_at: string; reason?: string }): Promise<DoctorTimeOff> =>
+    api.post<DoctorTimeOff>('/doctor/time-off', data),
+
+  deleteTimeOff: (id: number): Promise<void> =>
+    api.delete<void>(`/doctor/time-off/${id}`),
 }

@@ -2,7 +2,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routers import admin, auth, doctor, patients, public
+from app.routers import (
+    admin,
+    admin_appointments,
+    appointments,
+    appointments_actions,
+    auth,
+    doctor,
+    doctor_availability,
+    doctor_time_off,
+    patients,
+    public,
+    slots,
+)
 
 
 settings = get_settings()
@@ -41,6 +53,36 @@ app.include_router(
 
 app.include_router(
     doctor.router,
+    prefix="/api",
+)
+
+app.include_router(
+    slots.router,
+    prefix="/api",
+)
+
+app.include_router(
+    appointments.router,
+    prefix="/api",
+)
+
+app.include_router(
+    appointments_actions.router,
+    prefix="/api",
+)
+
+app.include_router(
+    doctor_availability.router,
+    prefix="/api",
+)
+
+app.include_router(
+    doctor_time_off.router,
+    prefix="/api",
+)
+
+app.include_router(
+    admin_appointments.router,
     prefix="/api",
 )
 

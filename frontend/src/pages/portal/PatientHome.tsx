@@ -1,22 +1,26 @@
-import { Link } from 'react-router-dom'
-
 import { Card } from '../../components/ui'
-import { buttonClasses } from '../../components/ui/buttonStyles'
 import { useAuth } from '../../context/useAuth'
 import { ProfileIncompleteBanner } from '../../features/patient/ProfileIncompleteBanner'
 import { QuickAccess } from './QuickAccess'
+import { useMyAppointments } from '../../features/appointment/hooks'
+import { NextAppointmentCard } from '../../features/appointment/NextAppointmentCard'
 
-/** Home del paciente: resumen de una sola pantalla en desktop.
- *
- *  Todavia no hay endpoints de turnos/recetas, asi que se muestran estados
- *  vacios reales. Nunca datos mock: si no hay informacion, se dice que no hay.
- */
+/** Home del paciente: resumen de una sola pantalla en desktop. */
 export function PatientHome() {
   const { user } = useAuth()
+  const { data: appointments } = useMyAppointments()
 
   if (!user) {
     return null
   }
+
+  const futureAppointments = appointments?.filter(
+    a => new Date(a.starts_at) >= new Date() && (a.status === 'SCHEDULED' || a.status === 'CONFIRMED')
+  ) ?? []
+
+  const nextAppointment = futureAppointments.sort(
+    (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+  )[0] ?? null
 
   return (
     <div className="mx-auto flex h-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -31,19 +35,7 @@ export function PatientHome() {
 
       <ProfileIncompleteBanner />
 
-      <Card variant="outlined" padding="lg">
-        <h2 className="text-lg font-semibold text-sky-900">Tu próximo turno</h2>
-
-        <div className="mt-4 flex flex-col items-start gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6">
-          <p className="text-slate-600">
-            No tenés turnos agendados por ahora.
-          </p>
-
-          <Link to="/app/turnos" className={buttonClasses({ size: 'md' })}>
-            Sacá un turno
-          </Link>
-        </div>
-      </Card>
+      <NextAppointmentCard appointment={nextAppointment} />
 
       <section aria-labelledby="accesos-rapidos">
         <h2

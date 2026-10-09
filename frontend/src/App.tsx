@@ -25,6 +25,10 @@ import { AdminPatientsPage } from './features/admin/AdminPatientsPage'
 import { AuditLogPage } from './features/admin/AuditLogPage'
 import { DoctorDashboard } from './features/doctor/DoctorDashboard'
 import { DoctorPatientDetailPage } from './features/doctor/DoctorPatientDetailPage'
+import { DoctorAgendaPage } from './features/doctor/DoctorAgendaPage'
+import { DoctorAppointmentDetailPage } from './features/doctor/DoctorAppointmentDetailPage'
+import { BookAppointmentPage } from './features/appointment/BookAppointmentPage'
+import { PatientAppointmentsPage } from './features/appointment/PatientAppointmentsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,31 +95,27 @@ function App() {
 
                 {/* Paciente. En la Fase 4 un ADMIN con perfil médico también
                     va a poder entrar: se suma acá a allowedRoles. */}
-                <Route
-                  path="/app"
-                  element={<ProtectedRoute allowedRoles={['PATIENT']} />}
-                >
-                  <Route index element={<PatientHome />} />
-                  <Route path="perfil" element={<ProfilePage />} />
-                  <Route
-                    path="turnos"
-                    element={
-                      <PlaceholderPage title="Turnos" description="Vas a poder sacar y gestionar tus turnos. Próximamente." />
-                    }
-                  />
-                  <Route
-                    path="recetas"
-                    element={
-                      <PlaceholderPage title="Recetas" description="Tus recetas van a estar acá. Próximamente." />
-                    }
-                  />
-                  <Route
-                    path="ordenes"
-                    element={
-                      <PlaceholderPage title="Órdenes" description="Tus órdenes y estudios van a estar acá. Próximamente." />
-                    }
-                  />
-                </Route>
+<Route
+                    path="/app"
+                    element={<ProtectedRoute allowedRoles={['PATIENT']} />}
+                  >
+                    <Route index element={<PatientHome />} />
+                    <Route path="perfil" element={<ProfilePage />} />
+                    <Route path="turnos" element={<PatientAppointmentsPage />} />
+                    <Route path="turnos/nuevo" element={<BookAppointmentPage />} />
+                    <Route
+                      path="recetas"
+                      element={
+                        <PlaceholderPage title="Recetas" description="Tus recetas van a estar acá. Próximamente." />
+                      }
+                    />
+                    <Route
+                      path="ordenes"
+                      element={
+                        <PlaceholderPage title="Órdenes" description="Tus órdenes y estudios van a estar acá. Próximamente." />
+                      }
+                    />
+                  </Route>
 
                 {/* Médico. Un ADMIN con perfil médico también entra al panel:
                     la seguridad real la aplica el backend. */}
@@ -124,10 +124,7 @@ function App() {
                   element={<ProtectedRoute allowedRoles={['DOCTOR', 'ADMIN']} />}
                 >
                   <Route index element={<DoctorDashboard />} />
-                  <Route
-                    path="agenda"
-                    element={<PlaceholderPage title="Agenda" description="Próximamente." />}
-                  />
+                  <Route path="agenda" element={<DoctorAgendaPage />} />
                   {/* "Pacientes" comparte la tabla del panel; el detalle vive
                       bajo este prefijo para que el nav lo marque activo. */}
                   <Route
@@ -137,6 +134,10 @@ function App() {
                   <Route
                     path="pacientes/:patientId"
                     element={<DoctorPatientDetailPage />}
+                  />
+                  <Route
+                    path="turnos/:appointmentId"
+                    element={<DoctorAppointmentDetailPage />}
                   />
                 </Route>
 
