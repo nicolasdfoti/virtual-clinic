@@ -3,6 +3,8 @@ import type {
   AdminPatient,
   AdminPatientFilters,
   AdminStats,
+  AuditLogEntry,
+  AuditLogFilters,
   Doctor,
   DoctorCreated,
   DoctorInput,
@@ -40,8 +42,39 @@ export function buildPatientQuery(
   return query ? `?${query}` : ''
 }
 
+export function buildAuditQuery(
+  filters: AuditLogFilters,
+  page: PageParams,
+): string {
+  const search = new URLSearchParams()
+
+  if (filters.actor_user_id !== undefined) {
+    search.set('actor_user_id', String(filters.actor_user_id))
+  }
+  if (filters.action) search.set('action', filters.action)
+  if (filters.entity_type) search.set('entity_type', filters.entity_type)
+  if (filters.created_from) search.set('created_from', filters.created_from)
+  if (filters.created_to) search.set('created_to', filters.created_to)
+
+  if (page.limit !== undefined) search.set('limit', String(page.limit))
+  if (page.offset !== undefined) search.set('offset', String(page.offset))
+
+  const query = search.toString()
+
+  return query ? `?${query}` : ''
+}
+
 export function fetchAdminStats(): Promise<AdminStats> {
   return api.get<AdminStats>('/admin/stats')
+}
+
+export function fetchAuditLogs(
+  filters: AuditLogFilters,
+  page: PageParams,
+): Promise<Paginated<AuditLogEntry>> {
+  return api.get<Paginated<AuditLogEntry>>(
+    `/admin/audit-logs${buildAuditQuery(filters, page)}`,
+  )
 }
 
 export function fetchAdminPatients(

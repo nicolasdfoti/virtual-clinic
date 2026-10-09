@@ -77,6 +77,17 @@ def test_offline_upgrade_genera_el_esquema_de_doctors_y_users():
     # Relacion administrativa con el medico asignado.
     assert "assigned_doctor_id" in sql
     assert "ix_patient_profiles_assigned_doctor_id" in sql
+    # Vinculo medico-paciente.
+    assert "CREATE TABLE care_relationships" in sql
+    assert "care_relationship_status" in sql
+    assert "uq_care_relationships_doctor_patient" in sql
+    assert "ix_care_relationships_doctor_id" in sql
+    assert "ix_care_relationships_patient_id" in sql
+    # Trazabilidad.
+    assert "CREATE TABLE audit_logs" in sql
+    assert "ix_audit_logs_action" in sql
+    assert "ix_audit_logs_entity_type" in sql
+    assert "ix_audit_logs_created_at" in sql
 
 
 @pytest.mark.skipif(

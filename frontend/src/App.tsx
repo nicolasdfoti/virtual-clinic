@@ -22,6 +22,9 @@ import { ChangePasswordPage } from './features/auth/ChangePasswordPage'
 import { AdminDashboard } from './features/admin/AdminDashboard'
 import { AdminDoctorsPage } from './features/admin/AdminDoctorsPage'
 import { AdminPatientsPage } from './features/admin/AdminPatientsPage'
+import { AuditLogPage } from './features/admin/AuditLogPage'
+import { DoctorDashboard } from './features/doctor/DoctorDashboard'
+import { DoctorPatientDetailPage } from './features/doctor/DoctorPatientDetailPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -120,19 +123,20 @@ function App() {
                   path="/app/medico"
                   element={<ProtectedRoute allowedRoles={['DOCTOR', 'ADMIN']} />}
                 >
-                  <Route
-                    index
-                    element={
-                      <PlaceholderPage title="Panel del médico" description="Próximamente." />
-                    }
-                  />
+                  <Route index element={<DoctorDashboard />} />
                   <Route
                     path="agenda"
                     element={<PlaceholderPage title="Agenda" description="Próximamente." />}
                   />
+                  {/* "Pacientes" comparte la tabla del panel; el detalle vive
+                      bajo este prefijo para que el nav lo marque activo. */}
                   <Route
                     path="pacientes"
-                    element={<PlaceholderPage title="Pacientes" description="Próximamente." />}
+                    element={<Navigate to="/app/medico" replace />}
+                  />
+                  <Route
+                    path="pacientes/:patientId"
+                    element={<DoctorPatientDetailPage />}
                   />
                 </Route>
 
@@ -144,6 +148,7 @@ function App() {
                   <Route index element={<AdminDashboard />} />
                   <Route path="medicos" element={<AdminDoctorsPage />} />
                   <Route path="pacientes" element={<AdminPatientsPage />} />
+                  <Route path="auditoria" element={<AuditLogPage />} />
                 </Route>
 
                 <Route path="/app/*" element={<Navigate to="/app" replace />} />

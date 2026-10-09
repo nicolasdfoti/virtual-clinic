@@ -52,8 +52,9 @@ from app.core.config import get_settings
 from app.core.security import create_access_token, hash_password
 from app.database import Base, get_db
 from app.main import app
+from app.models.care_relationship import CareRelationship
 from app.models.doctor import Doctor
-from app.models.enums import Role
+from app.models.enums import CareRelationshipStatus, Role
 from app.models.user import User
 
 
@@ -185,6 +186,26 @@ def create_doctor(
     session.refresh(doctor)
 
     return doctor
+
+
+def link_patient(
+    session,
+    doctor: Doctor,
+    patient: User,
+    status: CareRelationshipStatus = CareRelationshipStatus.ACTIVE,
+) -> CareRelationship:
+    """Crea el vinculo medico-paciente y lo devuelve."""
+    relationship = CareRelationship(
+        doctor_id=doctor.id,
+        patient_id=patient.id,
+        status=status,
+    )
+
+    session.add(relationship)
+    session.commit()
+    session.refresh(relationship)
+
+    return relationship
 
 
 @pytest.fixture

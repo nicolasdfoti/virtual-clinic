@@ -12,3 +12,14 @@ class Role(str, enum.Enum):
     PATIENT = "PATIENT"
     DOCTOR = "DOCTOR"
     ADMIN = "ADMIN"
+
+
+class CareRelationshipStatus(str, enum.Enum):
+    """Estado del vinculo entre un medico y un paciente.
+
+    No se borra la fila al desvincular: se pasa a `ENDED` para conservar el
+    historial de quien atendio a quien.
+    """
+
+    ACTIVE = "ACTIVE"
+    ENDED = "ENDED"

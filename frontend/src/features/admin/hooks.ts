@@ -7,11 +7,13 @@ import {
   fetchAdminDoctors,
   fetchAdminPatients,
   fetchAdminStats,
+  fetchAuditLogs,
   setDoctorActive,
   updateDoctor,
 } from './api'
 import type {
   AdminPatientFilters,
+  AuditLogFilters,
   DoctorInput,
   DoctorProfileInput,
   DoctorUpdateInput,
@@ -23,6 +25,8 @@ export const adminPatientsKey = (
   filters: AdminPatientFilters,
   page: PageParams,
 ) => ['admin', 'patients', filters, page] as const
+export const adminAuditKey = (filters: AuditLogFilters, page: PageParams) =>
+  ['admin', 'audit', filters, page] as const
 
 export function useAdminStats() {
   return useQuery({ queryKey: adminStatsKey, queryFn: fetchAdminStats })
@@ -39,6 +43,13 @@ export function useAdminPatients(
   return useQuery({
     queryKey: adminPatientsKey(filters, page),
     queryFn: () => fetchAdminPatients(filters, page),
+  })
+}
+
+export function useAuditLogs(filters: AuditLogFilters, page: PageParams) {
+  return useQuery({
+    queryKey: adminAuditKey(filters, page),
+    queryFn: () => fetchAuditLogs(filters, page),
   })
 }
 

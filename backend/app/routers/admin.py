@@ -12,6 +12,7 @@ from app.core.config import CLINIC_TIMEZONE
 from app.core.security import hash_password
 from app.database import get_db
 from app.dependencies import require_roles
+from app.models.audit_log import AuditLog
 from app.models.doctor import Doctor
 from app.models.enums import Role
 from app.models.patient_profile import PatientProfile
@@ -21,6 +22,7 @@ from app.schemas.admin import (
     AdminPatientResponse,
     AdminStatsResponse,
 )
+from app.schemas.audit import AuditLogListResponse, AuditLogResponse
 from app.schemas.doctor import (
     DoctorCreate,
     DoctorCreatedResponse,
@@ -494,4 +496,86 @@ def get_stats(
         active_patients=active_patients or 0,
         new_patients_this_month=new_patients_this_month or 0,
         active_doctors=active_doctors or 0,
+    )
+
+
+@router.get(
+    "/audit-logs",
+    response_model=AuditLogListResponse,
+)
+def list_audit_logs(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    actor_user_id: int | None = Query(default=None),
+    action: str | None = Query(default=None),
+    entity_type: str | None = Query(default=None),
+    created_from: date | None = Query(default=None),
+    created_to: date | None = Query(default=None),
+    current_admin: User = Depends(require_roles(Role.ADMIN)),
+    db: Session = Depends(get_db),
+):
+    """Log de auditoria con filtros y paginacion, mas nuevo primero.
+
+    La lectura de auditoria no se audita a si misma: seria ruido y no aporta.
+    """
+    query = db.query(AuditLog, User).outerjoin(
+        User, AuditLog.actor_user_id == User.id
+    )
+
+    if actor_user_id is not None:
+        query = query.filter(AuditLog.actor_user_id == actor_user_id)
+
+    if action and action.strip():
+        query = query.filter(AuditLog.action.ilike(f"%{action.strip()}%"))
+
+    if entity_type and entity_type.strip():
+        query = query.filter(
+            AuditLog.entity_type.ilike(f"%{entity_type.strip()}%")
+        )
+
+    if created_from is not None:
+        query = query.filter(
+            AuditLog.created_at >= _clinic_day_start(created_from)
+        )
+
+    if created_to is not None:
+        query = query.filter(
+            AuditLog.created_at
+            < _clinic_day_start(created_to) + timedelta(days=1)
+        )
+
+    total = query.count()
+
+    rows = (
+        query.order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    items = [
+        AuditLogResponse(
+            id=entry.id,
+            actor_user_id=entry.actor_user_id,
+            actor_email=actor.email if actor is not None else None,
+            actor_name=(
+                f"{actor.first_name} {actor.last_name}"
+                if actor is not None
+                else None
+            ),
+            action=entry.action,
+            entity_type=entry.entity_type,
+            entity_id=entry.entity_id,
+            ip=entry.ip,
+            metadata=entry.extra,
+            created_at=entry.created_at,
+        )
+        for entry, actor in rows
+    ]
+
+    return AuditLogListResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset,
     )

@@ -70,3 +70,24 @@ export type DoctorProfileInput = {
   license_number: string
   bio?: string | null
 }
+
+export type AuditLogEntry = {
+  id: number
+  actor_user_id: number | null
+  actor_email: string | null
+  actor_name: string | null
+  action: string
+  entity_type: string
+  entity_id: number | null
+  ip: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+export type AuditLogFilters = {
+  actor_user_id?: number
+  action?: string
+  entity_type?: string
+  created_from?: string
+  created_to?: string
+}
