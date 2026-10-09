@@ -37,18 +37,27 @@ def get_current_user(
             headers=CREDENTIALS_HEADERS,
         )
 
-    user_id = decode_access_token(access_token)
+    token = decode_access_token(access_token)
 
-    if user_id is None:
+    if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=INVALID_SESSION_DETAIL,
             headers=CREDENTIALS_HEADERS,
         )
 
-    user = db.get(User, int(user_id))
+    user = db.get(User, int(token.subject))
 
     if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=INVALID_SESSION_DETAIL,
+            headers=CREDENTIALS_HEADERS,
+        )
+
+    # Token revocado: el usuario cambio la contraseña (o se cerro sesion en
+    # todos los dispositivos) despues de que se emitiera.
+    if user.token_version != token.version:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=INVALID_SESSION_DETAIL,

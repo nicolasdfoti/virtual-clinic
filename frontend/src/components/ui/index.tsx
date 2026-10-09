@@ -1,6 +1,7 @@
 import type { HTMLAttributes } from 'react';
 
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
+export { TextField, type TextFieldProps } from './TextField';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, type CardProps } from './Card';
 export { CTA, TrustIndicators, type CTAProps, type TrustIndicatorsProps } from './CTA';
 

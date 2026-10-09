@@ -68,13 +68,24 @@ export function ProfileMenu() {
             <p className="truncate text-xs text-slate-500">{user.email}</p>
           </div>
 
+          {user.role === 'PATIENT' && (
+            <Link
+              to="/app/perfil"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2.5 text-sm text-slate-700 transition-colors hover:bg-sky-50 hover:text-sky-700"
+            >
+              Mi perfil
+            </Link>
+          )}
+
           <Link
-            to="/app/perfil"
+            to="/app/cambiar-contrasena"
             role="menuitem"
             onClick={() => setIsOpen(false)}
             className="block px-4 py-2.5 text-sm text-slate-700 transition-colors hover:bg-sky-50 hover:text-sky-700"
           >
-            Mi perfil
+            Cambiar contraseña
           </Link>
 
           <button

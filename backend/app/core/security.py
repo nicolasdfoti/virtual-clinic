@@ -1,9 +1,20 @@
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import ALGORITHM, get_settings
+
+
+@dataclass(frozen=True)
+class TokenPayload:
+    """Contenido util del JWT. `version` es la de `users.token_version`: si no
+    coincide con la actual, el token quedo revocado (logout global o cambio de
+    contraseña)."""
+
+    subject: str
+    version: int
 
 
 settings = get_settings()
@@ -30,6 +41,7 @@ def verify_password(
 
 def create_access_token(
     subject: str,
+    token_version: int = 0,
     expires_minutes: int | None = None,
 ) -> str:
     minutes = (
@@ -41,13 +53,13 @@ def create_access_token(
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=minutes)
 
     return jwt.encode(
-        {"sub": subject, "exp": expires_at},
+        {"sub": subject, "ver": token_version, "exp": expires_at},
         settings.SECRET_KEY,
         algorithm=ALGORITHM,
     )
 
 
-def decode_access_token(token: str) -> str | None:
+def decode_access_token(token: str) -> TokenPayload | None:
     try:
         payload = jwt.decode(
             token,
@@ -62,4 +74,10 @@ def decode_access_token(token: str) -> str | None:
     if not isinstance(subject, str) or not subject.isdigit():
         return None
 
-    return subject
+    # Los tokens viejos (emitidos antes de existir `ver`) valen como version 0.
+    version = payload.get("ver", 0)
+
+    if not isinstance(version, int) or isinstance(version, bool):
+        return None
+
+    return TokenPayload(subject=subject, version=version)

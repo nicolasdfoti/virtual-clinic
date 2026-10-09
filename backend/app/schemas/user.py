@@ -100,6 +100,28 @@ class LoginRequest(BaseModel):
         return _validate_password(value)
 
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("current_password")
+    @classmethod
+    def current_password_within_limits(cls, value: str) -> str:
+        # Mismo tope de bcrypt que login: una clave mas larga se truncaria en
+        # silencio al comparar.
+        if len(value.encode("utf-8")) > MAX_PASSWORD_BYTES:
+            raise ValueError(
+                f"La contraseña no puede superar los {MAX_PASSWORD_BYTES} bytes."
+            )
+
+        return value
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_within_limits(cls, value: str) -> str:
+        return _validate_password(value)
+
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr

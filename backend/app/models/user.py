@@ -16,6 +16,7 @@ from app.models.enums import Role
 
 if TYPE_CHECKING:
     from app.models.doctor import Doctor
+    from app.models.patient_profile import PatientProfile
 
 
 class User(Base):
@@ -103,6 +104,12 @@ class User(Base):
 
     # La vuelta de la relacion one-to-one con User vive en Doctor.user.
     doctor: Mapped[Doctor | None] = relationship(
+        back_populates="user",
+        uselist=False,
+    )
+
+    # Idem Doctor: la vuelta vive en PatientProfile.user.
+    patient_profile: Mapped[PatientProfile | None] = relationship(
         back_populates="user",
         uselist=False,
     )

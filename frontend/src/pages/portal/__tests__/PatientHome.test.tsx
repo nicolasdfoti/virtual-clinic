@@ -1,20 +1,23 @@
+import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
 import { AuthProvider } from '../../../context/AuthProvider'
-import { mockApi, PATIENT } from '../../../test/testUtils'
+import { createTestQueryClient, mockApi, PATIENT } from '../../../test/testUtils'
 import { PatientHome } from '../PatientHome'
 
 function renderHome() {
   mockApi(PATIENT)
 
   return render(
-    <AuthProvider>
-      <MemoryRouter>
-        <PatientHome />
-      </MemoryRouter>
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <MemoryRouter>
+          <PatientHome />
+        </MemoryRouter>
+      </AuthProvider>
+    </QueryClientProvider>,
   )
 }
 
@@ -51,6 +54,14 @@ describe('PatientHome', () => {
     for (const label of ['Turnos', 'Recetas', 'Órdenes']) {
       expect(screen.getByRole('link', { name: new RegExp(label) })).toBeInTheDocument()
     }
+  })
+
+  it('invita a completar el perfil si faltan datos', async () => {
+    renderHome()
+
+    expect(
+      await screen.findByRole('link', { name: 'Completar perfil' }),
+    ).toBeInTheDocument()
   })
 
   it('muestra el estado vacío de últimos movimientos', async () => {

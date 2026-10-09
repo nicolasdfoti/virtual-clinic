@@ -68,6 +68,12 @@ def test_offline_upgrade_genera_el_esquema_de_doctors_y_users():
     assert "token_version" in sql
     # FK one-to-one contra users.
     assert "REFERENCES users (id)" in sql
+    # Tabla de perfil de paciente.
+    assert "CREATE TABLE patient_profiles" in sql
+    assert "ix_patient_profiles_user_id" in sql
+    assert "ix_patient_profiles_dni" in sql
+    assert "insurance_provider" in sql
+    assert "emergency_contact_phone" in sql
 
 
 @pytest.mark.skipif(

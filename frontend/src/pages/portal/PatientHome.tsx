@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 import { useAuth } from '../../context/useAuth'
+import { ProfileIncompleteBanner } from '../../features/patient/ProfileIncompleteBanner'
 import { QuickAccess } from './QuickAccess'
 
 /** Home del paciente: resumen de una sola pantalla en desktop.
@@ -27,6 +28,8 @@ export function PatientHome() {
           Este es el resumen de tu actividad en la clínica.
         </p>
       </div>
+
+      <ProfileIncompleteBanner />
 
       <Card variant="outlined" padding="lg">
         <h2 className="text-lg font-semibold text-sky-900">Tu próximo turno</h2>

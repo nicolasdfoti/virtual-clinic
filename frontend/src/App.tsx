@@ -17,7 +17,8 @@ import Contact from './pages/Contact'
 import { TermsPage, PrivacyPage } from './pages/Legal'
 import { PatientHome } from './pages/portal/PatientHome'
 import { PlaceholderPage } from './pages/portal/PlaceholderPage'
-import { ChangePassword } from './pages/portal/ChangePassword'
+import { ProfilePage } from './features/patient/ProfilePage'
+import { ChangePasswordPage } from './features/auth/ChangePasswordPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,16 +81,7 @@ function App() {
                 clave temporal; cada area suma su propio chequeo de rol. */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppShell />}>
-                <Route path="/app/cambiar-contrasena" element={<ChangePassword />} />
-                <Route
-                  path="/app/perfil"
-                  element={
-                    <PlaceholderPage
-                      title="Mi perfil"
-                      description="Acá vas a poder ver y editar tus datos. Próximamente."
-                    />
-                  }
-                />
+                <Route path="/app/cambiar-contrasena" element={<ChangePasswordPage />} />
 
                 {/* Paciente. En la Fase 4 un ADMIN con perfil médico también
                     va a poder entrar: se suma acá a allowedRoles. */}
@@ -98,6 +90,7 @@ function App() {
                   element={<ProtectedRoute allowedRoles={['PATIENT']} />}
                 >
                   <Route index element={<PatientHome />} />
+                  <Route path="perfil" element={<ProfilePage />} />
                   <Route
                     path="turnos"
                     element={

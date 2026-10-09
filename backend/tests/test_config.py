@@ -77,3 +77,4 @@ def test_importar_app_models_registra_las_tablas():
 
     assert "users" in Base.metadata.tables
     assert "doctors" in Base.metadata.tables
+    assert "patient_profiles" in Base.metadata.tables

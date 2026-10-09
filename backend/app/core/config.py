@@ -9,6 +9,10 @@ MIN_SECRET_KEY_LENGTH = 32
 
 ALGORITHM = "HS256"
 
+# Zona de la clinica. Se usa para calcular "hoy" en validaciones (por ejemplo
+# que la fecha de nacimiento no sea futura) y, mas adelante, para armar turnos.
+CLINIC_TIMEZONE = "America/Argentina/Buenos_Aires"
+
 ACCESS_TOKEN_COOKIE_NAME = "access_token"
 
 # `lax` evita que el cookie viaje en POST cross-site (CSRF basico) y sigue

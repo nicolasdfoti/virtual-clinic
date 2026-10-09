@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routers import auth
+from app.routers import auth, patients
 
 
 settings = get_settings()
@@ -20,12 +20,17 @@ app.add_middleware(
     # Lo que el frontend realmente usa (services/api.ts): get/post/put/delete.
     # Menos superficie que "*": si el frontend necesita otro metodo/header hay
     # que tocar esta lista a proposito.
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type"],
 )
 
 app.include_router(
     auth.router,
+    prefix="/api",
+)
+
+app.include_router(
+    patients.router,
     prefix="/api",
 )
 

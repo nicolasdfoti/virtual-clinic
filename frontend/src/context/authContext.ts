@@ -11,6 +11,9 @@ export type AuthContextValue = {
   logout: () => Promise<void>
   /** Limpia la sesion local sin pegarle al backend. La usa el 401 global. */
   clearSession: () => void
+  /** Revalida /auth/me y actualiza la sesion local (ej. tras cambiar la
+   *  contraseña, para reflejar `must_change_password`). */
+  refresh: () => Promise<Session>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

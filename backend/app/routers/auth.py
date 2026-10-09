@@ -15,6 +15,7 @@ from app.models.enums import Role
 from app.models.user import User
 from app.schemas.user import (
     LoginRequest,
+    PasswordChange,
     UserCreate,
     UserResponse,
     normalize_email,
@@ -147,7 +148,10 @@ def login(
 
     set_auth_cookie(
         response,
-        create_access_token(subject=str(user.id)),
+        create_access_token(
+            subject=str(user.id),
+            token_version=user.token_version,
+        ),
     )
 
     return user
@@ -171,3 +175,46 @@ def me(
     current_user: User = Depends(get_current_active_user),
 ):
     return current_user
+
+
+@router.patch(
+    "/password",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def change_password(
+    payload: PasswordChange,
+    response: Response,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    if not verify_password(
+        payload.current_password,
+        current_user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña actual no es correcta.",
+        )
+
+    current_user.password_hash = hash_password(payload.new_password)
+
+    # Con esto el usuario deja de tener la clave temporal y puede usar el
+    # portal normalmente.
+    current_user.must_change_password = False
+
+    # Invalida los tokens emitidos antes de este cambio (otras sesiones
+    # abiertas). La sesion actual se conserva reemitiendo la cookie abajo.
+    current_user.token_version += 1
+
+    db.commit()
+    db.refresh(current_user)
+
+    set_auth_cookie(
+        response,
+        create_access_token(
+            subject=str(current_user.id),
+            token_version=current_user.token_version,
+        ),
+    )
+
+    return None
