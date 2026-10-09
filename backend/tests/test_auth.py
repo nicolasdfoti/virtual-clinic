@@ -84,6 +84,46 @@ def test_register_ignora_el_role_enviado_por_el_cliente(client, db_session):
     assert response.json()["role"] == "PATIENT"
 
 
+def test_register_no_pide_cambiar_la_password(client):
+    response = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
+
+    assert response.status_code == 201
+    assert response.json()["must_change_password"] is False
+
+
+def test_register_ante_email_registrado_en_la_carrera_devuelve_400_no_500(
+    client,
+    db_session,
+    monkeypatch,
+):
+    """Saneo del informe (a): el chequeo previo NO es atomico.
+
+    Dos requests concurrentes pueden pasarlo los dos y el segundo commit
+    reventaba con 500 por IntegrityError. Se simula exactamente ese caso: el
+    chequeo no encuentra nada (email nuevo) y el commit falla por restriccion.
+    La respuesta tiene que ser 400, el mismo detail del chequeo previo.
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    from app.models.user import User
+
+    def commit_que_revienta():
+        # Un request concurrente se metio entre el chequeo y nuestro commit.
+        raise IntegrityError(
+            "INSERT INTO users (email) VALUES (:email)",
+            {"email": "ana@example.com"},
+            Exception("duplicate key value violates unique constraint"),
+        )
+
+    monkeypatch.setattr(db_session, "commit", commit_que_revienta)
+
+    response = client.post("/api/auth/register", json=REGISTER_PAYLOAD)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "No se pudo completar el registro."
+    assert db_session.query(User).count() == 0
+
+
 def test_register_normaliza_los_nombres(client):
     response = client.post(
         "/api/auth/register",
@@ -173,6 +213,42 @@ def test_login_con_usuario_inactivo_da_403(client, inactive_user):
     # Generico a proposito: no puede confirmar que el email existe.
     assert response.json()["detail"] == "Credenciales inválidas."
     assert "desactivad" not in response.json()["detail"]
+
+
+def test_login_con_password_de_73_bytes_da_422(client, user):
+    """Saneo del informe (b): LoginRequest no validaba el limite de bytes y el
+    hash de bcrypt truncaria la password en silencio."""
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "ana@example.com", "password": "a" * 73},
+    )
+
+    assert response.status_code == 422
+    assert "72 bytes" in str(response.json())
+
+
+def test_login_exige_password_minima(client, user):
+    """Igual que register: una password de menos de 8 caracteres ni llega a
+    compararse."""
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "ana@example.com", "password": "corta7"},
+    )
+
+    assert response.status_code == 422
+    assert "8 caracteres" in str(response.json())
+
+
+def test_login_devuelve_must_change_password(client, db_session):
+    create_user(db_session)
+
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "ana@example.com", "password": "Password123"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["must_change_password"] is False
 
 
 def test_me_con_cookie_devuelve_el_usuario(client, user):

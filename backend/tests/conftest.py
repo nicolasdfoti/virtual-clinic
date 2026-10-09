@@ -23,6 +23,20 @@ USING_SQLITE = TEST_DATABASE_URL is None
 if USING_SQLITE:
     os.environ["DATABASE_URL"] = "sqlite://"
 else:
+    # Los tests borran las tablas entre casos: apuntar a la base de desarrollo
+    # (o a cualquier base sin "test" en el nombre) destruiria datos reales.
+    # Se aborta la corrida antes de tocar nada en vez de pedir confirmacion.
+    from sqlalchemy.engine.url import make_url
+
+    parsed = make_url(TEST_DATABASE_URL)
+    database_name = parsed.database or ""
+
+    if "test" not in database_name.lower():
+        raise SystemExit(
+            "TEST_DATABASE_URL debe apuntar a una base de test (nombre con "
+            f"'test'), no a '{database_name}'. Abortando para no borrar datos."
+        )
+
     # pydantic-settings prioriza las variables de entorno sobre el archivo .env,
     # asi que esto evita que la app se conecte a la base de develop.
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
@@ -38,6 +52,7 @@ from app.core.config import get_settings
 from app.core.security import hash_password
 from app.database import Base, get_db
 from app.main import app
+from app.models.doctor import Doctor
 from app.models.enums import Role
 from app.models.user import User
 
@@ -116,6 +131,7 @@ def create_user(
     is_active: bool = True,
     first_name: str = "Ana",
     last_name: str = "Ruiz",
+    must_change_password: bool = False,
 ) -> User:
     user = User(
         email=email,
@@ -124,6 +140,7 @@ def create_user(
         last_name=last_name,
         role=role,
         is_active=is_active,
+        must_change_password=must_change_password,
     )
 
     session.add(user)
@@ -131,6 +148,32 @@ def create_user(
     session.refresh(user)
 
     return user
+
+
+def create_doctor(
+    session,
+    user: User,
+    license_number: str = "MP 100",
+    specialty: str = "Clínica médica",
+    bio: str | None = None,
+    is_active: bool = True,
+    consultation_minutes: int = 30,
+) -> Doctor:
+    """Crea la fila de doctor one-to-one para `user` y la devuelve."""
+    doctor = Doctor(
+        user_id=user.id,
+        license_number=license_number,
+        specialty=specialty,
+        bio=bio,
+        is_active=is_active,
+        consultation_minutes=consultation_minutes,
+    )
+
+    session.add(doctor)
+    session.commit()
+    session.refresh(doctor)
+
+    return doctor
 
 
 @pytest.fixture
@@ -144,6 +187,28 @@ def inactive_user(db_session) -> User:
         db_session,
         email="inactivo@example.com",
         is_active=False,
+    )
+
+
+@pytest.fixture
+def doctor_user(db_session) -> User:
+    """Usuario con rol DOCTOR y su fila de doctor activa."""
+    doctor_user = create_user(
+        db_session,
+        email="medico@example.com",
+        role=Role.DOCTOR,
+    )
+    create_doctor(db_session, doctor_user, license_number="MP 100")
+
+    return doctor_user
+
+
+@pytest.fixture
+def admin_user(db_session) -> User:
+    return create_user(
+        db_session,
+        email="admin@example.com",
+        role=Role.ADMIN,
     )
 
 

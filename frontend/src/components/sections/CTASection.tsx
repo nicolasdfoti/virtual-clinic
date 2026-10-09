@@ -1,4 +1,4 @@
-import { CTA, TrustIndicators } from '../ui';
+import { CTA } from '../ui';
 
 interface CTAFinalSectionProps {
   title?: string;
@@ -11,12 +11,12 @@ interface CTAFinalSectionProps {
 }
 
 export function CTAFinalSection({
-  title = '¿Listo para encontrar tu profesional?',
-  description = 'Explorá las especialidades disponibles, conocé los perfiles de nuestros profesionales y coordiná tu consulta virtual.',
-  primaryLabel = 'Buscar profesionales',
-  primaryHref = '/professionals',
-  secondaryLabel = 'Ver especialidades',
-  secondaryHref = '/specialties',
+  title = '¿Listo para dar el primer paso?',
+  description = 'Creá tu cuenta y prepará tu perfil para sacar tu primer turno cuando lancemos la agenda.',
+  primaryLabel = 'Crear cuenta',
+  primaryHref = '/register',
+  secondaryLabel = 'Conocé a nuestro equipo',
+  secondaryHref = '/professionals',
   background = 'sky',
 }: CTAFinalSectionProps = {}) {
   return (
@@ -27,24 +27,5 @@ export function CTAFinalSection({
       secondaryAction={{ label: secondaryLabel, href: secondaryHref }}
       background={background}
     />
-  );
-}
-
-const trustItems = [
-  { icon: '👨‍⚕️', label: 'Perfiles con especialidad, matrícula y experiencia' },
-  { icon: '📹', label: 'Consultas por videollamada o chat' },
-  { icon: '🌐', label: 'Acceso desde el navegador, sin instalar nada' },
-  { icon: '🕒', label: 'Consultas disponibles todos los días' },
-  { icon: '📄', label: 'Información clara de cada profesional antes de reservar' },
-  { icon: '💬', label: 'Canal de contacto para resolver dudas' },
-];
-
-export function TrustSection() {
-  return (
-    <section className="border-y border-slate-200 bg-slate-50 py-12" aria-label="Características de la plataforma">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <TrustIndicators items={trustItems} />
-      </div>
-    </section>
   );
 }

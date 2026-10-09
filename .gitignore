@@ -31,4 +31,7 @@ htmlcov/
 .coverage
 .coverage.*
 
+# Empaquetado / herramientas
+repomix-output.xml
+
 AGENTS.md

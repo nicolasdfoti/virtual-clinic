@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { clinic } from '../config/clinic';
 
 const footerSections = [
   {
@@ -6,28 +7,16 @@ const footerSections = [
     links: [
       { label: 'Inicio', href: '/' },
       { label: 'Sobre nosotros', href: '/about' },
-      { label: 'Especialidades', href: '/specialties' },
       { label: 'Profesionales', href: '/professionals' },
+      { label: 'Preguntas frecuentes', href: '/faq' },
       { label: 'Contacto', href: '/contact' },
     ],
   },
   {
-    title: 'Pacientes',
+    title: 'Cuenta',
     links: [
-      { label: 'Buscar profesionales', href: '/professionals' },
-      { label: 'Ver especialidades', href: '/specialties' },
-      { label: 'Experiencia para pacientes', href: '/patients' },
       { label: 'Iniciar sesión', href: '/login' },
       { label: 'Crear cuenta', href: '/register' },
-    ],
-  },
-  {
-    title: 'Nosotros',
-    links: [
-      { label: 'Sobre nosotros', href: '/about' },
-      { label: 'Nuestro equipo', href: '/about#equipo' },
-      { label: 'Valores', href: '/about#valores' },
-      { label: 'Preguntas frecuentes', href: '/faq' },
     ],
   },
 ];
@@ -38,7 +27,7 @@ export function Footer() {
   return (
     <footer className="bg-slate-950 text-slate-300" role="contentinfo">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-3">
           <div>
             <Link to="/" className="flex items-center gap-2" aria-label="Clínica Virtual - Inicio">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 text-xl font-bold text-white" aria-hidden="true">
@@ -50,7 +39,7 @@ export function Footer() {
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
               Plataforma de telemedicina que conecta pacientes con profesionales de la salud
-              para consultas por videollamada o chat.
+              para consultas por videollamada desde el navegador.
             </p>
           </div>
 
@@ -71,9 +60,20 @@ export function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 border-t border-slate-800 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {currentYear} Clínica Virtual. Todos los derechos reservados.</p>
-          <p>Las consultas virtuales no reemplazan la atención de emergencias.</p>
+          <p>© {currentYear} {clinic.name}. Todos los derechos reservados.</p>
+          <nav className="flex flex-wrap gap-4" aria-label="Legal">
+            <Link to="/terminos" className="transition-colors hover:text-sky-400">
+              Términos y condiciones
+            </Link>
+            <Link to="/privacidad" className="transition-colors hover:text-sky-400">
+              Política de privacidad
+            </Link>
+          </nav>
         </div>
+
+        <p className="mt-4 text-xs text-slate-600">
+          Las consultas virtuales no reemplazan la atención de emergencias.
+        </p>
       </div>
     </footer>
   );

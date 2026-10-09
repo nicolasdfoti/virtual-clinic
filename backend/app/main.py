@@ -17,8 +17,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # Lo que el frontend realmente usa (services/api.ts): get/post/put/delete.
+    # Menos superficie que "*": si el frontend necesita otro metodo/header hay
+    # que tocar esta lista a proposito.
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type"],
 )
 
 app.include_router(

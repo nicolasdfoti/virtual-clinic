@@ -20,7 +20,6 @@ const publicNavItems: NavItem[] = [
       { label: 'Preguntas frecuentes', href: '/faq' },
     ],
   },
-  { label: 'Especialidades', href: '/specialties' },
   { label: 'Profesionales', href: '/professionals' },
   { label: 'Contacto', href: '/contact' },
 ];

@@ -92,6 +92,13 @@ class LoginRequest(BaseModel):
     def email_to_lowercase(cls, value: str) -> str:
         return normalize_email(value)
 
+    @field_validator("password")
+    @classmethod
+    def password_within_limits(cls, value: str) -> str:
+        # Idem register: bcrypt trunca en 72 bytes, asi que se rechaza en vez
+        # de truncar. Sin esto, un login con password gigante llegaba al hash.
+        return _validate_password(value)
+
 
 class UserResponse(BaseModel):
     id: int
@@ -100,5 +107,8 @@ class UserResponse(BaseModel):
     last_name: str
     role: Role
     is_active: bool
+    # Expuesto a proposito: el frontend lo usa para forzar el cambio de clave.
+    # `token_version` y cualquier dato de salud o identidad no salen aca.
+    must_change_password: bool
 
     model_config = ConfigDict(from_attributes=True)

@@ -9,3 +9,6 @@
 - Tests: cada endpoint nuevo con éxito, 401, 403/404 (otro rol, otro paciente) y validación. En el frontend, tests con Vitest + Testing Library reutilizando src/test/testUtils.ts. Corré lint, tests y build (`npm run lint && npm test && npm run build`) antes y después.
 - Alcance: hacé solo lo que pide el prompt; lo que detectes fuera de alcance, listalo al final.
 - Entrega: resumen con archivos tocados, cómo probar a mano, decisiones tomadas y pendientes. No hagas commit.
+- Tiempos: horas y franjas siempre en zona America/Argentina/Buenos_Aires.
+- Login: nunca habilitar enumeración de emails (misma respuesta y mismo timing para email inexistente y contraseña incorrecta).
+- Entrega: un vertical slice por prompt; no mezclar cambios de esquema (migraciones) con features.

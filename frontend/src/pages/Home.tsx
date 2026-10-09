@@ -1,25 +1,24 @@
 import Hero from '../components/Hero';
-import {
-  SpecialtiesSection,
-  ProfessionalsSection,
-  HowItWorksSection,
-  BenefitsSection,
-  TrustSection,
-  FAQSection,
-  CTAFinalSection,
-} from '../components/sections';
+import { HowItWorksSection, ProfessionalsSection, FAQSection } from '../components/sections';
 
 export function Home() {
   return (
     <>
       <Hero />
-      <SpecialtiesSection />
-      <ProfessionalsSection limit={3} />
       <HowItWorksSection />
-      <BenefitsSection />
-      <TrustSection />
-      <FAQSection limit={5} showViewAll />
-      <CTAFinalSection />
+      <ProfessionalsSection />
+      <FAQSection
+        limit={3}
+        showViewAll
+        cta={{
+          title: '¿Listo para el primer paso?',
+          description: 'Registrate ahora y prepará tu perfil para sacar tu primer turno cuando lancemos la agenda.',
+          primaryLabel: 'Creá tu cuenta',
+          primaryHref: '/register',
+          secondaryLabel: 'Conocé a tu médico',
+          secondaryHref: '/professionals',
+        }}
+      />
     </>
   );
 }

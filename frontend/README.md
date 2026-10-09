@@ -1,75 +1,54 @@
-# React + TypeScript + Vite
+# Clínica Virtual — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web de telemedicina. Es la parte pública del proyecto: presentación de
+la plataforma, contacto y autenticación. El portal de pacientes, médicos y
+administradores llega en una fase posterior (rutas `/app`).
 
-Currently, two official plugins are available:
+Stack: React 19 + React Router 7 + TypeScript + Vite + Tailwind CSS 4, con
+Vitest + Testing Library para tests.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Requisitos
 
-## React Compiler
+- Node.js 20 o superior (probado con Node 22).
+- La API del backend corriendo (ver `../backend`) o, al menos, un
+  `VITE_API_URL` apuntando a algún backend.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Puesta en marcha
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+cp .env.example .env   # en Windows: copy .env.example .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+La app queda en `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Variables de entorno
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Se cargan desde `frontend/.env` (no se versiona; hay un `.env.example` de
+referencia). Vite solo expone al bundle las variables con prefijo `VITE_`, y
+**quedan visibles en el navegador**: nunca pongas secretos acá.
 
-```
+| Variable       | Descripción                                                      | Default                     |
+| -------------- | ---------------------------------------------------------------- | --------------------------- |
+| `VITE_API_URL` | Base de la API, incluido el prefijo `/api` que usa el backend.    | `http://localhost:8000/api` |
+
+## Scripts
+
+| Comando             | Qué hace                                  |
+| ------------------- | ----------------------------------------- |
+| `npm run dev`       | Servidor de desarrollo con HMR.           |
+| `npm run build`     | Chequeo de tipos (`tsc -b`) + build.      |
+| `npm run preview`   | Sirve el build de producción localmente.  |
+| `npm run lint`      | ESLint sobre todo el proyecto.            |
+| `npm test`          | Corre los tests una vez (Vitest).         |
+| `npm run test:watch`| Tests en modo watch.                      |
+
+## Estructura
+
+- `src/components` — componentes de UI, navbar, footer y secciones de la home.
+- `src/pages` — páginas asociadas a rutas (`Home`, `About`, `Professionals`, `FAQ`, `Contact`, `Login`, `Register`, `Legal`).
+- `src/config/clinic.ts` — datos públicos de la clínica (con `TODO` para completar).
+- `src/data` — contenido de las secciones (preguntas frecuentes, cómo funciona, especialidades).
+- `src/services` — cliente de la API y sesión.
+- `src/routes` — `ProtectedRoute` y helper del home por rol.

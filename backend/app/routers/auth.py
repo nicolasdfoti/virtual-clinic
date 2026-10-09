@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import (
@@ -87,7 +88,20 @@ def register(
     )
 
     db.add(new_user)
-    db.commit()
+
+    # El chequeo de arriba no es atómico: dos requests concurrentes pueden
+    # pasarlo los dos. Sin esto, el segundo commit revienta con un 500 por
+    # IntegrityError. Como el mensaje no puede confirmar que el email existe,
+    # se devuelve el mismo detail del chequeo previo.
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se pudo completar el registro.",
+        )
+
     db.refresh(new_user)
 
     return new_user

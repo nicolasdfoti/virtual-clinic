@@ -1,28 +1,51 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getFAQCategories, getFAQsByCategory } from '../../data/faqs';
+import {
+  getFAQCategories,
+  getFAQsByCategory,
+  type FAQCategory,
+} from '../../data/faqs';
 import { SectionHeader, Card } from '../ui';
 
-type CategoryId = ReturnType<typeof getFAQCategories>[0]['id'];
+export interface FAQCta {
+  title: string;
+  description?: string;
+  primaryLabel: string;
+  primaryHref: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+}
 
 interface FAQSectionProps {
   title?: string;
   description?: string;
   limit?: number;
   showViewAll?: boolean;
+  cta?: FAQCta;
 }
+
+const categoryLabels: Record<FAQCategory, string> = {
+  general: 'General',
+  pacientes: 'Pacientes',
+  profesionales: 'Profesionales',
+  tecnico: 'Técnico',
+  privacidad: 'Privacidad y seguridad',
+};
 
 export function FAQSection({
   title = 'Resolvemos tus dudas',
   description = 'Encontrá respuestas a las consultas más comunes sobre consultas virtuales, privacidad y más.',
   limit,
   showViewAll = false,
+  cta,
 }: FAQSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [activeCategory, setActiveCategory] = useState<CategoryId>('general');
+  const [activeCategory, setActiveCategory] = useState<FAQCategory>('general');
   const categories = getFAQCategories();
   const isLimited = typeof limit === 'number';
-  const visibleFAQs = isLimited ? getFAQsByCategory(activeCategory).slice(0, limit) : getFAQsByCategory(activeCategory);
+  const visibleFAQs = isLimited
+    ? getFAQsByCategory(activeCategory).slice(0, limit)
+    : getFAQsByCategory(activeCategory);
 
   return (
     <section id="faq" className="bg-sky-50 py-16 sm:py-24">
@@ -33,22 +56,22 @@ export function FAQSection({
           <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Categorías de preguntas frecuentes">
             {categories.map((category) => (
               <button
-                key={category.id}
+                key={category}
                 type="button"
                 onClick={() => {
-                  setActiveCategory(category.id);
+                  setActiveCategory(category);
                   setOpenIndex(null);
                 }}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  activeCategory === category.id
+                  activeCategory === category
                     ? 'bg-sky-600 text-white shadow-sm'
                     : 'bg-white text-slate-600 hover:bg-sky-50 hover:text-sky-700'
                 }`}
                 role="tab"
-                aria-selected={activeCategory === category.id}
-                aria-controls={`faq-panel-${category.id}`}
+                aria-selected={activeCategory === category}
+                aria-controls={`faq-panel-${category}`}
               >
-                {category.label}
+                {categoryLabels[category]}
               </button>
             ))}
           </div>
@@ -57,7 +80,7 @@ export function FAQSection({
         <div
           id={`faq-panel-${activeCategory}`}
           role={isLimited ? undefined : 'tabpanel'}
-          aria-label={isLimited ? undefined : `${categories.find((c) => c.id === activeCategory)?.label} preguntas`}
+          aria-label={isLimited ? undefined : `${categoryLabels[activeCategory]} preguntas`}
           className="mt-8 space-y-4"
         >
           {visibleFAQs.map((faq, index) => (
@@ -70,7 +93,7 @@ export function FAQSection({
                   aria-expanded={openIndex === index}
                   aria-controls={`faq-answer-${faq.id}`}
                 >
-                  <span className="font-semibold text-sky-900 pr-4">{faq.question}</span>
+                  <span className="pr-4 font-semibold text-sky-900">{faq.question}</span>
                   <svg
                     className={`h-5 w-5 flex-shrink-0 text-sky-600 transition-transform ${
                       openIndex === index ? 'rotate-180' : ''
@@ -117,6 +140,29 @@ export function FAQSection({
             </Link>
           </p>
         </div>
+
+        {cta && (
+          <div className="mt-12 rounded-3xl bg-white p-8 text-center shadow-sm sm:p-12">
+            <h3 className="text-2xl font-bold text-sky-900 sm:text-3xl">{cta.title}</h3>
+            {cta.description && <p className="mt-3 text-lg leading-relaxed text-slate-600">{cta.description}</p>}
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Link
+                to={cta.primaryHref}
+                className="rounded-full bg-sky-600 px-7 py-3.5 font-semibold text-white shadow-lg transition hover:bg-sky-700"
+              >
+                {cta.primaryLabel}
+              </Link>
+              {cta.secondaryLabel && cta.secondaryHref && (
+                <Link
+                  to={cta.secondaryHref}
+                  className="rounded-full border border-slate-300 bg-white px-7 py-3.5 font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-600"
+                >
+                  {cta.secondaryLabel}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

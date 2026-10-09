@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -8,10 +9,13 @@ from sqlalchemy import (
     String,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 from app.models.enums import Role
+
+if TYPE_CHECKING:
+    from app.models.doctor import Doctor
 
 
 class User(Base):
@@ -62,6 +66,25 @@ class User(Base):
         server_default="true",
     )
 
+    # `true` cuando el usuario tiene que cambiar la clave antes de usar el
+    # sistema (primer login, admin creado por bootstrap o reset de password).
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+    )
+
+    # Se incrementa para invalidar todos los tokens previos de un usuario
+    # (cierre de sesion global / cambio de password): el token guarda una
+    # version y deja de ser valido si no coincide con la actual.
+    token_version: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
+
     # timestamptz: se guarda en UTC con timezone. La zona de la clinica
     # (America/Argentina/Buenos_Aires) se aplica solo al mostrar y al calcular
     # horarios, nunca al guardar ni comparar.
@@ -76,4 +99,10 @@ class User(Base):
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    # La vuelta de la relacion one-to-one con User vive en Doctor.user.
+    doctor: Mapped[Doctor | None] = relationship(
+        back_populates="user",
+        uselist=False,
     )

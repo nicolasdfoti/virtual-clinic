@@ -46,7 +46,7 @@ function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-sky-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-sky-50 px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
 
         {/* Header */}
@@ -148,7 +148,7 @@ function Login() {
         </p>
 
       </div>
-    </main>
+    </div>
   )
 }
 
