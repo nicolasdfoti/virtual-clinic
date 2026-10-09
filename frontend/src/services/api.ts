@@ -6,16 +6,77 @@ const DEFAULT_ERROR_MESSAGE = 'Ocurrió un error en la solicitud.'
 const NETWORK_ERROR_MESSAGE =
   'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.'
 
+// Endpoints donde un 401 es parte del flujo normal: /auth/me es el bootstrap de
+// sesion (401 = todavia no hay sesion, no "se vencio") y /auth/login muestra el
+// error en el formulario. Si dispararan el manejador global, el arranque
+// anonimo redirigiria al login en loop y las credenciales invalidas perderian
+// su mensaje.
+const SESSION_ENDPOINTS = ['/auth/me', '/auth/login']
+
 export class ApiError extends Error {
   status: number
   data: unknown
+  /** Codigo de negocio opcional del backend (ej. PASSWORD_CHANGE_REQUIRED). */
+  code?: string
 
-  constructor(message: string, status: number, data: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    data: unknown,
+    code?: string,
+  ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.data = data
+    this.code = code
   }
+}
+
+/** Respuesta paginada convenida con el backend. */
+export type Paginated<T> = {
+  items: T[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export type PageParams = {
+  limit?: number
+  offset?: number
+}
+
+/** Arma el query string de paginacion para pegarle a un listado. */
+export function toPageQuery(params: PageParams = {}): string {
+  const search = new URLSearchParams()
+
+  if (params.limit !== undefined) {
+    search.set('limit', String(params.limit))
+  }
+
+  if (params.offset !== undefined) {
+    search.set('offset', String(params.offset))
+  }
+
+  const query = search.toString()
+
+  return query ? `?${query}` : ''
+}
+
+type UnauthorizedHandler = () => void
+
+let unauthorizedHandler: UnauthorizedHandler | null = null
+
+/** Registra quien reacciona a un 401 global. La app lo usa para limpiar la
+ *  sesion y mandar al login; los tests que no lo registran no navegan solos. */
+export function setUnauthorizedHandler(
+  handler: UnauthorizedHandler | null,
+): void {
+  unauthorizedHandler = handler
+}
+
+function isSessionEndpoint(endpoint: string): boolean {
+  return SESSION_ENDPOINTS.some((prefix) => endpoint.startsWith(prefix))
 }
 
 async function readBody(response: Response): Promise<unknown> {
@@ -71,11 +132,61 @@ function extractErrorMessage(data: unknown): string {
     return data
   }
 
-  if (!data || typeof data !== 'object' || !('detail' in data)) {
+  if (!data || typeof data !== 'object') {
     return ''
   }
 
-  return readDetail((data as { detail: unknown }).detail)
+  // Formato nuevo: { code, message }. Si no hay message, cae al detail clasico.
+  const record = data as { detail?: unknown; message?: unknown }
+
+  if (typeof record.message === 'string' && record.message.trim()) {
+    return record.message
+  }
+
+  if (!('detail' in data)) {
+    return ''
+  }
+
+  return readDetail(record.detail)
+}
+
+function readCode(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined
+  }
+
+  const code = (value as { code?: unknown }).code
+
+  return typeof code === 'string' ? code : undefined
+}
+
+function extractErrorCode(data: unknown): string | undefined {
+  const direct = readCode(data)
+
+  if (direct) {
+    return direct
+  }
+
+  if (!data || typeof data !== 'object') {
+    return undefined
+  }
+
+  // El code puede venir anidado dentro de detail ({ detail: { code } }).
+  return readCode((data as { detail?: unknown }).detail)
+}
+
+function serializeBody(body: unknown): BodyInit | undefined {
+  if (body === undefined || body === null) {
+    return undefined
+  }
+
+  // FormData se manda tal cual: el navegador agrega el Content-Type multipart
+  // con su boundary. Serializarlo a JSON rompe la subida de archivos.
+  if (body instanceof FormData) {
+    return body
+  }
+
+  return JSON.stringify(body)
 }
 
 async function request<T>(
@@ -84,7 +195,9 @@ async function request<T>(
 ): Promise<T> {
   const headers = new Headers(options?.headers)
 
-  headers.set('Content-Type', 'application/json')
+  if (!(options?.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json')
+  }
 
   let response: Response
 
@@ -102,11 +215,18 @@ async function request<T>(
 
   const data = await readBody(response)
 
+  // 401 global: la sesion se cayo a mitad de uso. Los endpoints de sesion
+  // quedan afuera para no redirigir durante el arranque ni en el login.
+  if (response.status === 401 && !isSessionEndpoint(endpoint)) {
+    unauthorizedHandler?.()
+  }
+
   if (!response.ok) {
     throw new ApiError(
       extractErrorMessage(data) || DEFAULT_ERROR_MESSAGE,
       response.status,
       data,
+      extractErrorCode(data),
     )
   }
 
@@ -121,13 +241,19 @@ export const api = {
   post: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, {
       method: 'POST',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: serializeBody(body),
     }),
 
   put: <T>(endpoint: string, body?: unknown) =>
     request<T>(endpoint, {
       method: 'PUT',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: serializeBody(body),
+    }),
+
+  patch: <T>(endpoint: string, body?: unknown) =>
+    request<T>(endpoint, {
+      method: 'PATCH',
+      body: serializeBody(body),
     }),
 
   delete: <T>(endpoint: string) =>

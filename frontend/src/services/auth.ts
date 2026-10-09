@@ -9,6 +9,7 @@ export type Session = {
   last_name: string
   role: Role
   is_active: boolean
+  must_change_password: boolean
 }
 
 export function login(

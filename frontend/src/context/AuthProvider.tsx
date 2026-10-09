@@ -40,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const clearSession = useCallback(() => {
+    setUser(null)
+    setStatus('anonymous')
+  }, [])
+
   const login = useCallback(async (email: string, password: string) => {
     const session = await loginRequest(email, password)
 
@@ -55,14 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       // Aunque el backend falle, el cliente queda deslogueado: el estado local
       // es la fuente de verdad para la UI.
-      setUser(null)
-      setStatus('anonymous')
+      clearSession()
     }
-  }, [])
+  }, [clearSession])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, login, logout }),
-    [user, status, login, logout],
+    () => ({ user, status, login, logout, clearSession }),
+    [user, status, login, logout, clearSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

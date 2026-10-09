@@ -37,7 +37,7 @@ function SessionLinks({
   onNavigate: () => void;
   variant: 'desktop' | 'mobile';
 }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isMobile = variant === 'mobile';
 
   if (!user) {
@@ -72,30 +72,17 @@ function SessionLinks({
   }
 
   return (
-    <>
-      <NavLink
-        to={homeForRole(user.role)}
-        onClick={onNavigate}
-        className={
-          isMobile
-            ? 'block rounded-lg px-3 py-3 text-center text-base font-medium text-slate-600 hover:bg-sky-50'
-            : 'rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-600'
-        }
-      >
-        {user.first_name}
-      </NavLink>
-      <button
-        type="button"
-        onClick={() => void logout()}
-        className={
-          isMobile
-            ? 'block w-full rounded-lg bg-sky-600 px-3 py-3 text-center text-base font-medium text-white hover:bg-sky-700'
-            : 'rounded-full bg-sky-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sky-700'
-        }
-      >
-        Cerrar sesión
-      </button>
-    </>
+    <NavLink
+      to={homeForRole(user.role)}
+      onClick={onNavigate}
+      className={
+        isMobile
+          ? 'block rounded-lg bg-sky-600 px-3 py-3 text-center text-base font-medium text-white hover:bg-sky-700'
+          : 'rounded-full bg-sky-600 px-5 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-sky-700'
+      }
+    >
+      Ir a mi portal
+    </NavLink>
   );
 }
 

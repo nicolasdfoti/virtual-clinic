@@ -26,7 +26,7 @@ function renderLogin(initialEntries: string[] = ['/login']) {
         element: <Login />,
       },
       {
-        path: '/pacientes',
+        path: '/app',
         element: <p>area de pacientes</p>,
       },
       {
@@ -58,7 +58,7 @@ async function fillCredentials() {
 }
 
 describe('Login', () => {
-  it('actualiza el contexto y redirige a /pacientes cuando las credenciales son validas', async () => {
+  it('actualiza el contexto y redirige a /app cuando las credenciales son validas', async () => {
     mockApi(PATIENT)
 
     const router = renderLogin()
@@ -72,7 +72,7 @@ describe('Login', () => {
 
     // ...y el router navega al home del rol.
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/pacientes')
+      expect(router.state.location.pathname).toBe('/app')
     })
 
     expect(await screen.findByText('area de pacientes')).toBeInTheDocument()

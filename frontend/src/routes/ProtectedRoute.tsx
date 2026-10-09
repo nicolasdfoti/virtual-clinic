@@ -9,6 +9,9 @@ type ProtectedRouteProps = {
   allowedRoles?: Role[]
 }
 
+/** Pantalla obligatoria cuando la cuenta tiene una clave temporal. */
+export const CHANGE_PASSWORD_PATH = '/app/cambiar-contrasena'
+
 /** Guarda de rutas privadas.
  *
  *  Mientras se revalida la cookie contra /auth/me no se decide nada: redirigir
@@ -41,6 +44,15 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
         state={{ from: location.pathname }}
       />
     )
+  }
+
+  // Cuenta con clave temporal: no puede usar ninguna otra ruta del portal
+  // hasta cambiarla (se completa en la Fase 4).
+  if (
+    user.must_change_password &&
+    location.pathname !== CHANGE_PASSWORD_PATH
+  ) {
+    return <Navigate to={CHANGE_PASSWORD_PATH} replace />
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {

@@ -9,6 +9,7 @@ export const PATIENT: Session = {
   last_name: 'Ruiz',
   role: 'PATIENT',
   is_active: true,
+  must_change_password: false,
 }
 
 export const DOCTOR: Session = {
@@ -17,6 +18,14 @@ export const DOCTOR: Session = {
   email: 'medico@example.com',
   first_name: 'Gonzalo',
   role: 'DOCTOR',
+}
+
+export const ADMIN: Session = {
+  ...PATIENT,
+  id: 3,
+  email: 'admin@example.com',
+  first_name: 'Alicia',
+  role: 'ADMIN',
 }
 
 export function jsonResponse(

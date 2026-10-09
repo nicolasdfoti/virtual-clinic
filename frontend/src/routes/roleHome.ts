@@ -2,17 +2,16 @@ import type { Role } from '../services/auth'
 
 /** A donde cae cada rol despues de loguearse.
  *
- *  Hoy solo hay area de paciente. Cuando entren las areas de doctor y admin,
- *  alcanza con sumar la entrada: ProtectedRoute y el redirect post-login
- *  leen este mapa y no hay que tocar mas archivos.
+ *  Las tres areas del portal ya existen como paginas reales (aunque hoy sean
+ *  placeholders), asi que ningun rol cae en el catch-all.
  */
 export const ROLE_HOME: Record<Role, string> = {
-  PATIENT: '/pacientes',
-  DOCTOR: '/doctors',
-  ADMIN: '/admin',
+  PATIENT: '/app',
+  DOCTOR: '/app/medico',
+  ADMIN: '/app/admin',
 }
 
-export const DEFAULT_ROLE_HOME = '/pacientes'
+export const DEFAULT_ROLE_HOME = '/app'
 
 export function homeForRole(role: Role | undefined | null): string {
   if (!role) {
