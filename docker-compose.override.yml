@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://virtual_clinic:virtual_clinic@db:5432/virtual_clinic
+      SECRET_KEY: dev-secret-key-change-in-production-min-32-chars
+      ENVIRONMENT: development
+      COOKIE_SECURE: "false"
+      SQL_ECHO: "true"
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      PDF_FOOTER_LEGEND: "Indicacion medica"
+      STORAGE_DIR: /app/storage
+      MAX_FILE_SIZE_MB: 10
+      PATIENT_VISIBLE_NOTES: "false"
+      RATE_LIMIT_STORAGE_URI: redis://redis:6379/0
+    volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/alembic.ini:/app/alembic.ini:ro
+      - ./backend/alembic:/app/alembic:ro
+      - storage_data:/app/storage
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    environment:
+      POSTGRES_DB: virtual_clinic
+      POSTGRES_USER: virtual_clinic
+      POSTGRES_PASSWORD: virtual_clinic
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

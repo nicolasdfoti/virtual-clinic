@@ -13,9 +13,14 @@ pydantic-settings==2.15.0
 email-validator==2.3.0
 python-dotenv==1.2.4
 
-# Auth. Ver la nota de deuda en docs/ sobre migrar a PyJWT + pwdlib:
-# passlib esta sin mantenimiento y por eso bcrypt va pineado en 4.0.1
-# (con 4.1+ passlib 1.7.4 lanza un error al detectar la version).
-passlib[bcrypt]==1.7.4
-bcrypt==4.0.1
-python-jose[cryptography]==3.5.0
+# Auth: migracion de passlib+python-jose a pwdlib (argon2) + PyJWT
+# pwdlib usa argon2id por defecto, PyJWT es el standard para JWT.
+# Argon2 requiere la librería de sistema libargon2; en Docker se instala via apt.
+pwdlib==0.3.1
+pyjwt==2.15.1
+
+# Rate limiting: slowapi (usa limits + starlette). Wheel pura.
+slowapi==0.1.10
+
+# Security headers middleware
+starlette-context==0.5.1

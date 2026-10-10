@@ -1,7 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import get_settings
+from app.core.rate_limit import limiter
+from app.middleware.rate_limit_middleware import LoginEmailExtractorMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.middleware.origin_check import OriginCheckMiddleware
 from app.routers import (
     admin,
     admin_appointments,
@@ -31,16 +38,36 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Rate limiting middleware (debe ir antes de CORS para que el limiter vea la IP real)
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+# Middleware para extraer email en login/register
+app.add_middleware(LoginEmailExtractorMiddleware)
+
+# Security headers (CSP, HSTS, etc.)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Origin check para requests mutantes
+app.add_middleware(OriginCheckMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    # Lo que el frontend realmente usa (services/api.ts): get/post/put/delete.
-    # Menos superficie que "*": si el frontend necesita otro metodo/header hay
-    # que tocar esta lista a proposito.
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type"],
 )
+
+
+# Handler para rate limit exceeded
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request, exc):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Demasiadas solicitudes. Intente más tarde."},
+    )
+
 
 app.include_router(
     auth.router,

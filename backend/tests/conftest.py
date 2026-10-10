@@ -16,6 +16,7 @@ os.environ.setdefault("SECRET_KEY", "test-only-secret-key-not-used-anywhere")
 os.environ.setdefault("ENVIRONMENT", "testing")
 os.environ.setdefault("COOKIE_SECURE", "false")
 os.environ.setdefault("SQL_ECHO", "false")
+os.environ.setdefault("RATE_LIMIT_STORAGE_URI", "memory://")
 
 # Los PDFs de recetas/ordenes no ensucian el repo: en tests van a un temporal.
 os.environ.setdefault(

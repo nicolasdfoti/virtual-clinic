@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -8,7 +8,13 @@ from app.core.config import (
     ACCESS_TOKEN_COOKIE_SAMESITE,
     get_settings,
 )
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.rate_limit import login_limiter, register_limiter
+from app.core.security import (
+    create_access_token,
+    hash_password,
+    verify_password,
+    rehash_password_if_needed,
+)
 from app.dependencies import get_current_active_user
 from app.database import get_db
 from app.models.enums import Role
@@ -33,10 +39,9 @@ CREDENTIALS_HEADERS = {"WWW-Authenticate": "Bearer"}
 
 GENERIC_LOGIN_ERROR = "Credenciales inválidas."
 
-# Se hashea una sola vez al importar para que el login de un email inexistente
-# tarde lo mismo que uno real: sin esto, el 401 "rápido" delata que el email no
-# esta registrado (timing attack de enumeracion de cuentas).
-DUMMY_PASSWORD_HASH = hash_password("password-not-a-real-user")
+# Hash dummy para timing attack: argon2id hash de "dummy".
+# Se genera una vez al importar.
+DUMMY_PASSWORD_HASH = hash_password("dummy-password-not-a-real-user")
 
 
 def set_auth_cookie(response: Response, access_token: str) -> None:
@@ -66,7 +71,9 @@ def clear_auth_cookie(response: Response) -> None:
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@register_limiter
 def register(
+    request: Request,
     payload: UserCreate,
     db: Session = Depends(get_db),
 ):
@@ -90,10 +97,6 @@ def register(
 
     db.add(new_user)
 
-    # El chequeo de arriba no es atómico: dos requests concurrentes pueden
-    # pasarlo los dos. Sin esto, el segundo commit revienta con un 500 por
-    # IntegrityError. Como el mensaje no puede confirmar que el email existe,
-    # se devuelve el mismo detail del chequeo previo.
     try:
         db.commit()
     except IntegrityError:
@@ -112,7 +115,9 @@ def register(
     "/login",
     response_model=UserResponse,
 )
+@login_limiter
 def login(
+    request: Request,
     credentials: LoginRequest,
     response: Response,
     db: Session = Depends(get_db),
@@ -137,14 +142,20 @@ def login(
         )
 
     # Cuenta desactivada con la contrasena correcta. Tambien mensaje generico:
-    # decir "tu cuenta esta desactivada" confirma que el email existe y que la
-    # contrasena es correcta, que es justo lo que el endpoint no debe filtrar.
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=GENERIC_LOGIN_ERROR,
             headers=CREDENTIALS_HEADERS,
         )
+
+    # Rehash transparente: si el usuario tenia hash legacy (bcrypt), lo
+    # actualizamos a argon2id sin que el usuario lo note.
+    if user is not None:
+        new_hash = rehash_password_if_needed(user.password_hash, credentials.password)
+        if new_hash:
+            user.password_hash = new_hash
+            db.commit()
 
     set_auth_cookie(
         response,

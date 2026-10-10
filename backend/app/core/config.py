@@ -101,6 +101,12 @@ class Settings(BaseSettings):
         description="Tamano maximo aceptado para PatientFile, en MB.",
     )
 
+    # Storage URI para rate limiting (redis://... o memory:// para desarrollo).
+    RATE_LIMIT_STORAGE_URI: str = Field(
+        default="memory://",
+        description="URI de almacenamiento para rate limiting (redis://host:port o memory://).",
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def reject_placeholder_secret(cls, value: str) -> str:

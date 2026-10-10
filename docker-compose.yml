@@ -1,56 +1,108 @@
-# Solo para desarrollo. Levanta PostgreSQL y pgAdmin; el backend y el frontend
-# se corren en el host (ver README).
-#
-#   docker compose up -d      levantar
-#   docker compose down       parar (conserva el volumen)
-#   docker compose down -v    parar y BORRAR el volumen
-#
-# Las variables salen del `.env` de la raiz y no tienen defaults: si falta ese
-# archivo, compose falla en vez de arrancar Postgres con credenciales al azar.
+version: '3.8'
 
 services:
-  postgres:
+  # Base de datos PostgreSQL
+  db:
     image: postgres:17-alpine
-    container_name: virtual-clinic-postgres
+    container_name: virtual-clinic-db
     restart: unless-stopped
-
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB en el .env de la raiz}
-      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en el .env de la raiz}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en el .env de la raiz}
-
-    # Solo escucha en localhost: la base no queda alcanzable desde la red.
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT}:5432"
-
+      POSTGRES_DB: ${POSTGRES_DB:-virtual_clinic}
+      POSTGRES_USER: ${POSTGRES_USER:-virtual_clinic}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - db_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-virtual_clinic} -d ${POSTGRES_DB:-virtual_clinic}"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    networks:
+      - virtual-clinic-network
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: virtual-clinic-pgadmin
+  # Aplicación backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: virtual-clinic-api
     restart: unless-stopped
-
     environment:
-      # Sin default: compose falla si no estan en el .env, en lugar de dejar
-      # la interfaz con credenciales conocidas.
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:?falta PGADMIN_EMAIL en el .env de la raiz}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?falta PGADMIN_PASSWORD en el .env de la raiz}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-
-    # Bindear a localhost: pgAdmin no debe quedar expuesto en la red.
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-virtual_clinic}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-virtual_clinic}
+      SECRET_KEY: ${SECRET_KEY}
+      ENVIRONMENT: production
+      COOKIE_SECURE: "true"
+      SQL_ECHO: "false"
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://your-domain.com}
+      PDF_FOOTER_LEGEND: ${PDF_FOOTER_LEGEND:-"Indicacion medica"}
+      STORAGE_DIR: /app/storage
+      MAX_FILE_SIZE_MB: 10
+      PATIENT_VISIBLE_NOTES: "false"
+      RATE_LIMIT_STORAGE_URI: redis://redis:6379/0
+    volumes:
+      - storage_data:/app/storage
     ports:
-      - "127.0.0.1:${PGADMIN_PORT}:80"
-
+      - "8000:8000"
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - virtual-clinic-network
+
+  # Redis para rate limiting y sesiones
+  redis:
+    image: redis:7-alpine
+    container_name: virtual-clinic-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - virtual-clinic-network
+
+  # Proxy reverso (Nginx) - opcional, para SSL termination
+  # Descomentar y configurar certificados para usar en producción
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: virtual-clinic-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - virtual-clinic-network
 
 volumes:
-  postgres_data:
+  db_data:
+  storage_data:
+  redis_data:
+
+networks:
+  virtual-clinic-network:
+    driver: bridge
