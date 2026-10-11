@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
-import { Badge } from '../../components/ui'
+import { Avatar, Badge } from '../../components/ui'
 import { ApiError } from '../../services/api'
 import { profileApi } from './profileApi'
 
@@ -54,9 +54,16 @@ export function ProfileDetailPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-sky-900 sm:text-3xl">
-          Perfil de {profile.first_name} {profile.last_name}
-        </h1>
+        <div className="flex items-center gap-4">
+          <Avatar
+            name={`${profile.first_name} ${profile.last_name}`}
+            src={profile.photo ?? undefined}
+            size="lg"
+          />
+          <h1 className="text-2xl font-bold text-sky-900 sm:text-3xl">
+            Perfil de {profile.first_name} {profile.last_name}
+          </h1>
+        </div>
         <div className="mt-2 flex items-center gap-2">
           <Badge variant={
             profile.type === 'doctor' ? 'success' :

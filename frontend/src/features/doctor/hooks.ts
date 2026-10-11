@@ -69,6 +69,15 @@ export function useDoctorAppointments() {
   })
 }
 
+export function usePatientAppointments(patientId: number) {
+  return useQuery({
+    queryKey: ['doctor', 'patient', patientId, 'appointments'],
+    queryFn: () => doctorAppointmentApi.getPatientAppointments(patientId),
+    enabled: Number.isFinite(patientId) && patientId > 0,
+    staleTime: 30_000,
+  })
+}
+
 export function useDoctorAvailability() {
   return useQuery({
     queryKey: ['doctor', 'availability'],

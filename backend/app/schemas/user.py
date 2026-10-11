@@ -129,6 +129,9 @@ class UserResponse(BaseModel):
     last_name: str
     role: Role
     is_active: bool
+    # Foto de perfil como data URL. No es dato de salud ni de identidad sensible,
+    # asi que puede viajar en /auth/me.
+    photo: str | None = None
     # Expuesto a proposito: el frontend lo usa para forzar el cambio de clave.
     # `token_version` y cualquier dato de salud o identidad no salen aca.
     must_change_password: bool

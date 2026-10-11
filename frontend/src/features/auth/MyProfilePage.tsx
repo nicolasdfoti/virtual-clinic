@@ -9,10 +9,11 @@ import { useMyDoctorProfile, useUpdateMyDoctorBio } from '../doctor/profileHooks
 import { useMyAdminProfile } from '../admin/profileHooks'
 import { useAuth } from '../../context/useAuth'
 import { ProfilePage as PatientProfilePage } from '../patient/ProfilePage'
+import { ProfilePhotoCard } from './ProfilePhotoCard'
 
 /** Perfil del médico: solo lectura + bio editable. */
 function DoctorProfileView() {
-  const { isLoading, isError, error } = useMyDoctorProfile()
+  const { data: doctor, isLoading, isError, error } = useMyDoctorProfile()
   const updateBio = useUpdateMyDoctorBio()
   const [showBioForm, setShowBioForm] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -51,14 +52,11 @@ function DoctorProfileView() {
     )
   }
 
-  const { data: doctor } = useMyDoctorProfile()
-
   if (!doctor) {
     return <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">No pudimos cargar tu perfil.</p>
   }
 
-  const { data: doctorData } = useMyDoctorProfile()
-  const doctorDataSafe = doctorData!
+  const doctorDataSafe = doctor
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
@@ -80,6 +78,8 @@ function DoctorProfileView() {
             {error}
           </p>
         )}
+
+        <ProfilePhotoCard />
 
         <Card variant="outlined" padding="lg" className="mt-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -174,7 +174,7 @@ function DoctorProfileView() {
 
 /** Perfil del admin: solo lectura. */
 function AdminProfileView() {
-  const { isLoading, isError } = useMyAdminProfile()
+  const { data: admin, isLoading, isError } = useMyAdminProfile()
 
   if (isLoading) {
     return <p role="status" className="text-slate-500">Cargando tu perfil…</p>
@@ -187,8 +187,6 @@ function AdminProfileView() {
       </p>
     )
   }
-
-  const { data: admin } = useMyAdminProfile()
 
   if (!admin) {
     return <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">No pudimos cargar tu perfil.</p>
@@ -207,6 +205,8 @@ function AdminProfileView() {
       </header>
 
       <div className="mt-6">
+        <ProfilePhotoCard />
+
         <Card variant="outlined" padding="lg" className="mt-4">
           <h2 className="text-lg font-semibold text-sky-900">Datos de administrador</h2>
 

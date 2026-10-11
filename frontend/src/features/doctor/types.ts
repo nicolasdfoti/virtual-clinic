@@ -13,6 +13,7 @@ export type DoctorPatient = {
   id: number
   first_name: string
   last_name: string
+  photo: string | null
   dni: string | null
   insurance_provider: string | null
   next_appointment: DoctorNextAppointment | null
@@ -22,6 +23,7 @@ export type DoctorPatientDetail = {
   id: number
   first_name: string
   last_name: string
+  photo: string | null
   email: string
   dni: string | null
   birth_date: string | null
@@ -52,14 +54,33 @@ export type DoctorAppointment = {
   id: number
   doctor_id: number
   doctor_name: string | null
+  doctor_photo: string | null
   patient_id: number
   patient_name: string | null
+  patient_photo: string | null
   patient_dni: string | null
   starts_at: string
   ends_at: string
   status: AppointmentStatus
   reason: string | null
   modality: AppointmentModality
+  video_url: string | null
+  cancelled_by: number | null
+  cancel_reason: string | null
+  created_at: string
+}
+
+export type DoctorPatientAppointment = {
+  id: number
+  patient_id: number
+  patient_name: string | null
+  patient_photo: string | null
+  patient_dni: string | null
+  starts_at: string
+  ends_at: string
+  status: AppointmentStatus
+  modality: AppointmentModality
+  reason: string | null
   video_url: string | null
   cancelled_by: number | null
   cancel_reason: string | null

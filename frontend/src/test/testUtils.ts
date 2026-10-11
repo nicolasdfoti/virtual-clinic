@@ -21,6 +21,7 @@ export const PATIENT: Session = {
   last_name: 'Ruiz',
   role: 'PATIENT',
   is_active: true,
+  photo: null,
   must_change_password: false,
 }
 
@@ -212,6 +213,14 @@ export function mockApi(
         }
 
         return jsonResponse(options.profile ?? emptyPatientProfile(session.id))
+      }
+
+      if (url.includes('/notifications/unread-count')) {
+        return jsonResponse({ unread: 0 })
+      }
+
+      if (url.includes('/notifications')) {
+        return jsonResponse([])
       }
 
       return jsonResponse({ detail: 'Not found' }, { status: 404 })

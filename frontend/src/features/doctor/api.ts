@@ -5,6 +5,7 @@ import type {
   DoctorTimeOff, 
   DoctorPatient, 
   DoctorPatientDetail, 
+  DoctorPatientAppointment,
   LinkPatientInput,
   Prescription,
   MedicalOrder,
@@ -35,6 +36,9 @@ export const doctorAppointmentApi = {
 
   getDetail: (id: number): Promise<DoctorAppointment> =>
     api.get<DoctorAppointment>(`/doctor/appointments/${id}`),
+
+  getPatientAppointments: (patientId: number): Promise<DoctorPatientAppointment[]> =>
+    api.get<DoctorPatientAppointment[]>(`/doctor/patients/${patientId}/appointments`),
 
   cancel: (id: number, reason?: string): Promise<{ id: number; status: string }> =>
     api.patch<{ id: number; status: string }>(`/appointments/${id}/cancel`, { reason }),

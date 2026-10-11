@@ -78,6 +78,58 @@ def test_update_validates_time_range(client, doctor_user):
     assert response.status_code == 400
 
 
+def test_create_rejects_overlapping_range(client, doctor_user):
+    login_as(client, doctor_user)
+
+    first = client.post(
+        AVAILABILITY_PATH,
+        json={"weekday": 4, "start_time": "08:00:00", "end_time": "10:00:00"},
+    )
+    assert first.status_code == 201
+
+    overlapping = client.post(
+        AVAILABILITY_PATH,
+        json={"weekday": 4, "start_time": "09:00:00", "end_time": "11:00:00"},
+    )
+    assert overlapping.status_code == 409
+
+
+def test_create_allows_adjacent_range(client, doctor_user):
+    login_as(client, doctor_user)
+
+    client.post(
+        AVAILABILITY_PATH,
+        json={"weekday": 4, "start_time": "08:00:00", "end_time": "10:00:00"},
+    )
+    adjacent = client.post(
+        AVAILABILITY_PATH,
+        json={"weekday": 4, "start_time": "10:00:00", "end_time": "12:00:00"},
+    )
+
+    assert adjacent.status_code == 201
+
+
+def test_update_rejects_overlapping_range(client, doctor_user):
+    login_as(client, doctor_user)
+
+    client.post(
+        AVAILABILITY_PATH,
+        json={"weekday": 5, "start_time": "08:00:00", "end_time": "10:00:00"},
+    )
+    second = client.post(
+        AVAILABILITY_PATH,
+        json={"weekday": 5, "start_time": "10:00:00", "end_time": "12:00:00"},
+    )
+    second_id = second.json()["id"]
+
+    response = client.put(
+        f"{AVAILABILITY_PATH}/{second_id}",
+        json={"start_time": "09:00:00", "end_time": "12:00:00"},
+    )
+
+    assert response.status_code == 409
+
+
 def test_update_rejects_duplicate_start_time(client, doctor_user):
     login_as(client, doctor_user)
 

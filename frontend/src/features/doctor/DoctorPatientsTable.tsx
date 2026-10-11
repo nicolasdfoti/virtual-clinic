@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toZonedTime } from 'date-fns-tz'
 
+import { Avatar } from '../../components/ui'
 import type { DoctorPatient, DoctorNextAppointment } from './types'
 
 const CLINIC_TZ = 'America/Argentina/Buenos_Aires'
@@ -50,12 +51,19 @@ export function DoctorPatientsTable({
           {patients.map((patient) => (
             <tr key={patient.id}>
               <td className="px-4 py-3">
-                <Link
-                  to={`/app/medico/pacientes/${patient.id}`}
-                  className="font-medium text-sky-900 hover:underline"
-                >
-                  {patient.last_name}, {patient.first_name}
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Avatar
+                    name={`${patient.first_name} ${patient.last_name}`}
+                    src={patient.photo ?? undefined}
+                    size="sm"
+                  />
+                  <Link
+                    to={`/app/medico/pacientes/${patient.id}`}
+                    className="font-medium text-sky-900 hover:underline"
+                  >
+                    {patient.last_name}, {patient.first_name}
+                  </Link>
+                </div>
               </td>
               <td className="px-4 py-3 text-slate-600">
                 {patient.dni ?? '—'}

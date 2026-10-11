@@ -200,4 +200,5 @@ class PublicDoctorResponse(BaseModel):
     name: str
     specialty: str
     license_number: str
+    photo: str | None = None
     bio: str | None

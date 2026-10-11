@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 
 import { useAuth } from '../../context/useAuth'
 import { PORTAL_NAV } from '../../config/portalNav'
+import { NotificationBell } from '../../features/notifications/NotificationBell'
 import { ProfileMenu } from './ProfileMenu'
 
 const linkBase =
@@ -45,11 +46,13 @@ export function PortalNav() {
         ))}
       </nav>
 
-      <div className="hidden md:block">
+      <div className="hidden items-center gap-1 md:flex">
+        <NotificationBell />
         <ProfileMenu />
       </div>
 
       <div className="flex items-center gap-2 md:hidden">
+        <NotificationBell />
         <ProfileMenu />
 
         <button

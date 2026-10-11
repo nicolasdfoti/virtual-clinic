@@ -52,7 +52,7 @@ export function ProfileMenu() {
         aria-expanded={isOpen}
         aria-label="Menú de cuenta"
       >
-        <Avatar name={fullName} size="sm" />
+        <Avatar name={fullName} src={user.photo ?? undefined} size="sm" />
         <span className="hidden text-sm font-medium text-slate-700 sm:block">
           {user.first_name}
         </span>

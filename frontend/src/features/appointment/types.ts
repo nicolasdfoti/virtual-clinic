@@ -9,8 +9,10 @@ export type Appointment = {
   id: number
   doctor_id: number
   doctor_name: string | null
+  doctor_photo?: string | null
   patient_id: number
   patient_name: string | null
+  patient_photo?: string | null
   starts_at: string
   ends_at: string
   status: AppointmentStatus

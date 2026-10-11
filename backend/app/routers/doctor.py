@@ -26,7 +26,7 @@ from app.schemas.prescription import (
     PrescriptionCreate,
     PrescriptionResponse,
 )
-from app.services import audit, prescriptions
+from app.services import audit, notifications, prescriptions
 
 
 router = APIRouter(
@@ -84,6 +84,7 @@ def _list_item(
         id=user.id,
         first_name=user.first_name,
         last_name=user.last_name,
+        photo=user.photo,
         dni=profile.dni if profile is not None else None,
         insurance_provider=(
             profile.insurance_provider if profile is not None else None
@@ -234,6 +235,7 @@ def get_my_patient(
         id=user.id,
         first_name=user.first_name,
         last_name=user.last_name,
+        photo=user.photo,
         email=user.email,
         dni=profile.dni if profile is not None else None,
         birth_date=profile.birth_date if profile is not None else None,
@@ -359,6 +361,7 @@ def get_appointment_detail(
         id=appt.id,
         patient_id=appt.patient_id,
         patient_name=f"{patient.first_name} {patient.last_name}".strip() if patient else None,
+        patient_photo=patient.photo if patient else None,
         patient_dni=(
             db.query(PatientProfile)
             .filter(PatientProfile.user_id == appt.patient_id)
@@ -377,6 +380,66 @@ def get_appointment_detail(
         cancel_reason=appt.cancel_reason,
         created_at=appt.created_at,
     )
+
+
+@router.get(
+    "/patients/{patient_id}/appointments",
+    response_model=list[DoctorAppointmentDetail],
+)
+def list_patient_appointments(
+    patient_id: int,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    """Turnos de un paciente con este medico.
+
+    Reemplaza el filtrado en el cliente sobre /appointments/mine. 404 sin
+    relacion activa (mismo criterio que el resto de los recursos del paciente).
+    """
+    from app.models.appointment import Appointment
+
+    if _active_relationship(db, doctor.id, patient_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=PATIENT_NOT_FOUND_DETAIL,
+        )
+
+    patient = db.get(User, patient_id)
+    profile = (
+        db.query(PatientProfile)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+
+    rows = (
+        db.query(Appointment)
+        .filter(
+            Appointment.doctor_id == doctor.id,
+            Appointment.patient_id == patient_id,
+        )
+        .order_by(Appointment.starts_at.desc())
+        .all()
+    )
+
+    return [
+        DoctorAppointmentDetail(
+            id=appt.id,
+            patient_id=appt.patient_id,
+            patient_name=f"{patient.first_name} {patient.last_name}".strip() if patient else None,
+            patient_photo=patient.photo if patient else None,
+            patient_dni=profile.dni if profile is not None else None,
+            starts_at=appt.starts_at,
+            ends_at=appt.ends_at,
+            status=appt.status,
+            modality=appt.modality,
+            reason=appt.reason,
+            video_url=appt.video_url,
+            cancelled_by=appt.cancelled_by,
+            cancel_reason=appt.cancel_reason,
+            created_at=appt.created_at,
+        )
+        for appt in rows
+    ]
 
 
 # --- Recetas / Indicaciones medicas ---
@@ -441,6 +504,13 @@ def create_prescription(
         entity_id=prescription.id,
         ip=audit.client_ip(request),
         metadata={"patient_id": patient_id, "folio": prescription.folio},
+    )
+
+    notifications.notify_prescription_created(
+        db,
+        patient_user_id=patient_id,
+        doctor_name=f"{doctor.user.first_name} {doctor.user.last_name}".strip() or None,
+        prescription_id=prescription.id,
     )
 
     return prescription
@@ -597,6 +667,13 @@ def create_medical_order(
         entity_id=order.id,
         ip=audit.client_ip(request),
         metadata={"patient_id": patient_id, "folio": order.folio, "type": payload.type},
+    )
+
+    notifications.notify_medical_order_created(
+        db,
+        patient_user_id=patient_id,
+        doctor_name=f"{doctor.user.first_name} {doctor.user.last_name}".strip() or None,
+        order_id=order.id,
     )
 
     return order

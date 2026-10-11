@@ -22,6 +22,7 @@ function detail(
     id: 5,
     first_name: 'Sofía',
     last_name: 'Ledesma',
+    photo: null,
     email: 'sofia@example.com',
     dni: '31222333',
     birth_date: '1990-05-20',
@@ -60,7 +61,7 @@ function baseRoutes(patient: DoctorPatientDetail | { detail: string }) {
       respond: () => jsonResponse([]),
     },
     {
-      test: (url: string) => url.endsWith('/appointments/mine'),
+      test: (url: string) => url.endsWith('/doctor/patients/5/appointments'),
       respond: () => jsonResponse([]),
     },
   ]
@@ -128,6 +129,47 @@ describe('DoctorPatientDetailPage', () => {
 
     expect(screen.getByLabelText('Medicamento')).toBeInTheDocument()
     expect(screen.getByLabelText('Dosis (ej. 500 mg)')).toBeInTheDocument()
+  })
+
+  it('trae los turnos del paciente desde el endpoint por paciente', async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockFetchRoutes([
+      {
+        test: (url: string) => url.endsWith('/doctor/patients/5/appointments'),
+        respond: () =>
+          jsonResponse([
+            {
+              id: 77,
+              patient_id: 5,
+              patient_name: 'Sofía Ledesma',
+              patient_dni: '31222333',
+              starts_at: '2030-06-15T13:00:00Z',
+              ends_at: '2030-06-15T13:30:00Z',
+              status: 'SCHEDULED',
+              modality: 'VIDEO',
+              reason: null,
+              video_url: null,
+              cancelled_by: null,
+              cancel_reason: null,
+              created_at: '2026-01-01T00:00:00Z',
+            },
+          ]),
+      },
+      ...baseRoutes(detail()),
+    ])
+
+    renderPage()
+
+    await screen.findByText('Sofía Ledesma')
+    await user.click(screen.getByRole('tab', { name: 'Turnos' }))
+
+    expect(await screen.findByText('Videollamada — SCHEDULED')).toBeInTheDocument()
+
+    const calledUrls = fetchMock.mock.calls.map(([url]) => String(url))
+    expect(
+      calledUrls.some((url) => url.endsWith('/doctor/patients/5/appointments')),
+    ).toBe(true)
+    expect(calledUrls.some((url) => url.endsWith('/appointments/mine'))).toBe(false)
   })
 
   it('avisa cuando el paciente no está entre los atendidos', async () => {

@@ -10,7 +10,7 @@ import { api } from '../../services/api'
 import type { PublicDoctor } from '../directory/types'
 import { bookAppointmentSchema, type BookAppointmentForm } from './schemas'
 import { useBookAppointment, useDoctorSlots } from './hooks'
-import { Card } from '../../components/ui'
+import { Avatar, Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 const CLINIC_TZ = 'America/Argentina/Buenos_Aires'
 
@@ -114,9 +114,14 @@ function DoctorStep({
             ? 'border-sky-500 bg-sky-50'
             : 'border-slate-200 hover:border-sky-300 hover:bg-slate-50'}`}
         >
-          <div className="font-medium text-sky-900">{doctor.name}</div>
-          <div className="text-sm text-slate-600">{doctor.specialty}</div>
-          <div className="text-xs text-slate-500">Matrícula: {doctor.license_number}</div>
+          <div className="flex items-center gap-3">
+            <Avatar name={doctor.name} src={doctor.photo ?? undefined} size="md" />
+            <div>
+              <div className="font-medium text-sky-900">{doctor.name}</div>
+              <div className="text-sm text-slate-600">{doctor.specialty}</div>
+              <div className="text-xs text-slate-500">Matrícula: {doctor.license_number}</div>
+            </div>
+          </div>
           {doctor.bio && <div className="mt-2 text-sm text-slate-500 line-clamp-2">{doctor.bio}</div>}
         </button>
       ))}

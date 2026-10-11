@@ -22,9 +22,11 @@ class AppointmentPatientResponse(BaseModel):
     doctor_id: int
     doctor_user_id: int
     doctor_name: str | None = None
+    doctor_photo: str | None = None
     patient_id: int
     patient_user_id: int
     patient_name: str | None = None
+    patient_photo: str | None = None
     starts_at: datetime
     ends_at: datetime
     status: AppointmentStatus

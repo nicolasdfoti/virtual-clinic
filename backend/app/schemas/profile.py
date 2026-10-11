@@ -21,6 +21,7 @@ class OwnProfilePatientResponse(BaseModel):
     first_name: str
     last_name: str
     role: str  # "PATIENT"
+    photo: str | None = None
     dni: str | None = None
     birth_date: date | None = None
     sex: str | None = None
@@ -48,6 +49,7 @@ class OwnProfileDoctorResponse(BaseModel):
     first_name: str
     last_name: str
     role: str  # "DOCTOR"
+    photo: str | None = None
     specialty: str
     license_number: str
     bio: str | None = None
@@ -66,6 +68,7 @@ class OwnProfileAdminResponse(BaseModel):
     first_name: str
     last_name: str
     role: str  # "ADMIN"
+    photo: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -82,6 +85,7 @@ class PublicDoctorProfileResponse(BaseModel):
     user_id: int
     first_name: str
     last_name: str
+    photo: str | None = None
     specialty: str
     license_number: str
     bio: str | None = None
@@ -98,6 +102,7 @@ class DoctorViewOfPatientProfileResponse(BaseModel):
     email: str
     first_name: str
     last_name: str
+    photo: str | None = None
     dni: str | None = None
     birth_date: date | None = None
     sex: str | None = None
@@ -128,6 +133,7 @@ class AdminViewOfDoctorProfileResponse(BaseModel):
     email: str
     first_name: str
     last_name: str
+    photo: str | None = None
     specialty: str
     license_number: str
     bio: str | None = None
@@ -146,6 +152,7 @@ class AdminViewOfPatientProfileResponse(BaseModel):
     email: str
     first_name: str
     last_name: str
+    photo: str | None = None
     dni: str | None = None
     birth_date: date | None = None
     sex: str | None = None

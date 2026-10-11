@@ -85,9 +85,22 @@ def cancel_appointment(
     db.commit()
     db.refresh(appt)
 
-    notifications.send(
-        "appointment_cancelled",
-        {"appointment_id": appt.id, "cancelled_by": current_user.id},
+    from app.models.doctor import Doctor
+
+    doctor_row = (
+        doctor
+        if doctor is not None
+        else db.query(Doctor).filter(Doctor.id == appt.doctor_id).first()
+    )
+
+    notifications.notify_appointment_cancelled(
+        db,
+        appointment_id=appt.id,
+        cancelled_by_role=current_user.role,
+        cancelled_by_name=f"{current_user.first_name} {current_user.last_name}".strip() or None,
+        doctor_user_id=doctor_row.user_id if doctor_row else None,
+        patient_user_id=appt.patient_id,
+        starts_at=appt.starts_at,
     )
 
     return AppointmentUpdateResponse(id=appt.id, status=appt.status)
@@ -120,6 +133,13 @@ def complete_appointment(
     db.commit()
     db.refresh(appt)
 
+    notifications.notify_appointment_completed(
+        db,
+        appointment_id=appt.id,
+        patient_user_id=appt.patient_id,
+        starts_at=appt.starts_at,
+    )
+
     return AppointmentUpdateResponse(id=appt.id, status=appt.status)
 
 
@@ -149,5 +169,12 @@ def no_show_appointment(
     appt.status = AppointmentStatus.NO_SHOW
     db.commit()
     db.refresh(appt)
+
+    notifications.notify_appointment_no_show(
+        db,
+        appointment_id=appt.id,
+        patient_user_id=appt.patient_id,
+        starts_at=appt.starts_at,
+    )
 
     return AppointmentUpdateResponse(id=appt.id, status=appt.status)

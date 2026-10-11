@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
+import { Avatar } from '../components/ui'
 import { api } from '../services/api'
 
 type PublicDoctorDetail = {
@@ -8,6 +9,7 @@ type PublicDoctorDetail = {
   name: string
   specialty: string
   license_number: string
+  photo: string | null
   bio: string | null
 }
 
@@ -44,23 +46,11 @@ export function ProfessionalProfilePage() {
     )
   }
 
-  const initials = data.name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-sky-100">
-            <span className="text-2xl font-bold text-sky-700">
-              {initials}
-            </span>
-          </div>
+          <Avatar name={data.name} src={data.photo ?? undefined} size="xl" />
           <div>
             <h1 className="text-2xl font-bold text-sky-900 sm:text-3xl">
               Dr. {data.name}

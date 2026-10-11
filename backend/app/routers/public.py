@@ -39,6 +39,7 @@ def list_public_doctors(db: Session = Depends(get_db)):
             name=f"{user.first_name} {user.last_name}".strip(),
             specialty=doctor.specialty,
             license_number=doctor.license_number,
+            photo=user.photo,
             bio=doctor.bio,
         )
         for doctor, user in rows
@@ -76,5 +77,6 @@ def get_public_doctor(doctor_id: int, db: Session = Depends(get_db)):
         name=f"{user.first_name} {user.last_name}".strip(),
         specialty=doctor.specialty,
         license_number=doctor.license_number,
+        photo=user.photo,
         bio=doctor.bio,
     )

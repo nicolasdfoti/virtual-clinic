@@ -151,13 +151,12 @@ def book_appointment(
         )
     db.refresh(appt)
 
-    notifications.send(
-        "appointment_booked",
-        {
-            "appointment_id": appt.id,
-            "doctor_id": doctor.id,
-            "patient_id": current_user.id,
-        },
+    notifications.notify_appointment_booked(
+        db,
+        appointment_id=appt.id,
+        doctor_user_id=doctor.user_id,
+        patient_name=_format_name(current_user),
+        starts_at=appt.starts_at,
     )
 
     return AppointmentPatientResponse(
@@ -165,9 +164,11 @@ def book_appointment(
         doctor_id=appt.doctor_id,
         doctor_user_id=doctor.user_id if doctor else None,
         doctor_name=_format_name(doctor.user) if hasattr(doctor, "user") else None,
+        doctor_photo=doctor.user.photo if hasattr(doctor, "user") and doctor.user else None,
         patient_id=appt.patient_id,
         patient_user_id=current_user.id,
         patient_name=_format_name(current_user),
+        patient_photo=current_user.photo,
         starts_at=appt.starts_at,
         ends_at=appt.ends_at,
         status=appt.status,
@@ -216,9 +217,11 @@ def list_my_appointments(
                 doctor_id=appt.doctor_id,
                 doctor_user_id=doctor.user_id if doctor else None,
                 doctor_name=doc_name,
+                doctor_photo=doctor.user.photo if doctor is not None and doctor.user else None,
                 patient_id=appt.patient_id,
                 patient_user_id=patient.id if patient else None,
                 patient_name=pat_name,
+                patient_photo=patient.photo if patient is not None else None,
                 starts_at=appt.starts_at,
                 ends_at=appt.ends_at,
                 status=appt.status,

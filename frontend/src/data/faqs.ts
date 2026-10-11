@@ -19,7 +19,7 @@ export const faqs: FAQ[] = [
     id: 'faq-general-reserva',
     question: '¿Cómo reservo un turno?',
     answer:
-      'La reserva de turnos todavía no está activa: estamos construyendo la agenda. Cuando la habilitemos, vas a crear tu cuenta, elegir al profesional y el horario, y confirmar el turno desde la web. Publicamos las novedades en esta página.',
+      'Creás tu cuenta gratis, elegís al profesional y un horario disponible, y confirmás el turno desde la web. Después lo ves en tu portal junto con el detalle de la consulta.',
     category: 'general',
   },
   {
@@ -33,35 +33,35 @@ export const faqs: FAQ[] = [
     id: 'faq-pacientes-cuenta',
     question: '¿Necesito crear una cuenta?',
     answer:
-      'Sí. La cuenta única te va a permitir coordinar turnos y tener tu historial en un solo lugar. El registro es gratuito y toma unos minutos.',
+      'Sí. La cuenta única te permite coordinar turnos y tener tus recetas, órdenes e historial en un solo lugar. El registro es gratuito y toma unos minutos.',
     category: 'pacientes',
   },
   {
     id: 'faq-pacientes-cancelar',
     question: '¿Puedo cancelar o reprogramar un turno?',
     answer:
-      'Cuando lancemos la agenda vas a poder cancelar o reprogramar desde tu cuenta, respetando la política de cada profesional. Todavía no está disponible.',
+      'Sí. Podés cancelar desde tu cuenta hasta 24 horas antes del turno. Para reprogramar, cancelá y reservá otro horario disponible.',
     category: 'pacientes',
   },
   {
     id: 'faq-pacientes-precio',
     question: '¿Cuánto cuesta una consulta?',
     answer:
-      'El costo lo define cada profesional y se va a mostrar antes de confirmar el turno. Hoy no se cobran consultas porque la reserva todavía no está activa.',
+      'La plataforma no gestiona cobros. El valor de cada consulta lo define el profesional; consultalo al coordinar el turno.',
     category: 'pacientes',
   },
   {
     id: 'faq-pacientes-resultados',
     question: '¿Dónde veo mis recetas y resultados?',
     answer:
-      'Las recetas y las órdenes de estudios van a quedar guardadas en tu portal, junto con el resto de tus consultas, para que accedas cuando quieras.',
+      'Tus recetas y órdenes de estudios quedan guardadas en tu portal, junto con el resto de tus consultas, para que accedas cuando quieras.',
     category: 'pacientes',
   },
   {
     id: 'faq-profesionales-alta',
     question: '¿Cómo me registro como profesional?',
     answer:
-      'Vamos a habilitar el alta de profesionales con validación de matrícula nacional. Todavía no está activo el registro para médicos; escribinos por los canales de contacto y te avisamos cuando abra.',
+      'Las cuentas de profesionales las da de alta la administración de la plataforma. Escribinos por los canales de contacto para sumarte al equipo médico.',
     category: 'profesionales',
   },
   {

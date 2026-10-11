@@ -51,20 +51,21 @@ def create_availability(
 ):
     _validate_times(payload.start_time, payload.end_time)
 
-    existing = (
+    overlap = (
         db.query(DoctorAvailability)
         .filter(
             DoctorAvailability.doctor_id == doctor.id,
             DoctorAvailability.weekday == payload.weekday,
-            DoctorAvailability.start_time == payload.start_time,
+            DoctorAvailability.start_time < payload.end_time,
+            DoctorAvailability.end_time > payload.start_time,
         )
         .first()
     )
 
-    if existing is not None:
+    if overlap is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Ya existe una franja para ese día y horario.",
+            detail="La franja se superpone con otra existente para ese día.",
         )
 
     row = DoctorAvailability(
@@ -132,8 +133,9 @@ def update_availability(
         .filter(
             DoctorAvailability.doctor_id == doctor.id,
             DoctorAvailability.weekday == row.weekday,
-            DoctorAvailability.start_time == new_start,
             DoctorAvailability.id != row.id,
+            DoctorAvailability.start_time < new_end,
+            DoctorAvailability.end_time > new_start,
         )
         .first()
     )
@@ -141,7 +143,7 @@ def update_availability(
     if conflict is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Ya existe una franja para ese día y horario.",
+            detail="La franja se superpone con otra existente para ese día.",
         )
 
     row.start_time = new_start

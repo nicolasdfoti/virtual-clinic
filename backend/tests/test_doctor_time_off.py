@@ -3,7 +3,12 @@
 Cubren listado, alta y baja (DELETE) de bloqueos de tiempo. Como en
 disponibilidad, un bloqueo de otro medico se ve como 404.
 """
-from app.models.enums import Role
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+from app.models.appointment import Appointment
+from app.models.doctor import Doctor
+from app.models.enums import AppointmentModality, AppointmentStatus, Role
 from app.models.user import User
 
 from tests.conftest import create_doctor, create_user, login_as
@@ -75,3 +80,72 @@ def test_delete_missing_returns_404(client, doctor_user):
     response = client.delete(f"{TIME_OFF_PATH}/999")
 
     assert response.status_code == 404
+
+
+def test_rejects_block_over_existing_appointment(client, db_session, doctor_user):
+    doctor = db_session.query(Doctor).filter_by(user_id=doctor_user.id).one()
+    patient = create_user(db_session, email="pac@example.com", role=Role.PATIENT)
+
+    starts = datetime(2030, 6, 15, 10, 0, tzinfo=ZoneInfo("UTC"))
+    appointment = Appointment(
+        patient_id=patient.id,
+        doctor_id=doctor.id,
+        starts_at=starts,
+        ends_at=starts + timedelta(minutes=30),
+        status=AppointmentStatus.SCHEDULED,
+        modality=AppointmentModality.VIDEO,
+    )
+    db_session.add(appointment)
+    db_session.commit()
+
+    login_as(client, doctor_user)
+    response = client.post(TIME_OFF_PATH, json=BLOCK)
+
+    assert response.status_code == 409
+    assert "1 turno" in response.json()["detail"]
+
+
+def test_allows_block_that_does_not_overlap_appointment(
+    client, db_session, doctor_user
+):
+    doctor = db_session.query(Doctor).filter_by(user_id=doctor_user.id).one()
+    patient = create_user(db_session, email="pac@example.com", role=Role.PATIENT)
+
+    starts = datetime(2030, 6, 15, 18, 0, tzinfo=ZoneInfo("UTC"))
+    appointment = Appointment(
+        patient_id=patient.id,
+        doctor_id=doctor.id,
+        starts_at=starts,
+        ends_at=starts + timedelta(minutes=30),
+        status=AppointmentStatus.SCHEDULED,
+        modality=AppointmentModality.VIDEO,
+    )
+    db_session.add(appointment)
+    db_session.commit()
+
+    login_as(client, doctor_user)
+    response = client.post(TIME_OFF_PATH, json=BLOCK)
+
+    assert response.status_code == 201
+
+
+def test_cancelled_appointment_does_not_block(client, db_session, doctor_user):
+    doctor = db_session.query(Doctor).filter_by(user_id=doctor_user.id).one()
+    patient = create_user(db_session, email="pac@example.com", role=Role.PATIENT)
+
+    starts = datetime(2030, 6, 15, 10, 0, tzinfo=ZoneInfo("UTC"))
+    appointment = Appointment(
+        patient_id=patient.id,
+        doctor_id=doctor.id,
+        starts_at=starts,
+        ends_at=starts + timedelta(minutes=30),
+        status=AppointmentStatus.CANCELLED,
+        modality=AppointmentModality.VIDEO,
+    )
+    db_session.add(appointment)
+    db_session.commit()
+
+    login_as(client, doctor_user)
+    response = client.post(TIME_OFF_PATH, json=BLOCK)
+
+    assert response.status_code == 201

@@ -7,6 +7,7 @@ from sqlalchemy import (
     Enum as SAEnum,
     Integer,
     String,
+    Text,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -51,6 +52,14 @@ class User(Base):
     last_name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
+    )
+
+    # Foto de perfil como data URL (data:image/...;base64,...). Se guarda en la
+    # base porque no hay almacenamiento de objetos; el cliente la redimensiona
+    # antes de subirla para mantenerla chica.
+    photo: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
     )
 
     role: Mapped[Role] = mapped_column(

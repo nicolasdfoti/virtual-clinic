@@ -3,12 +3,19 @@
 Cubren el listado (solo vinculos ACTIVE del medico), el detalle en solo lectura
 con su auditoria y el alta de vinculo por DNI o email.
 """
-from datetime import date
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
+from app.models.appointment import Appointment
 from app.models.audit_log import AuditLog
 from app.models.care_relationship import CareRelationship
 from app.models.doctor import Doctor
-from app.models.enums import CareRelationshipStatus, Role
+from app.models.enums import (
+    AppointmentModality,
+    AppointmentStatus,
+    CareRelationshipStatus,
+    Role,
+)
 from app.models.patient_profile import PatientProfile
 from app.models.user import User
 
@@ -224,6 +231,61 @@ def test_detalle_vinculo_finalizado_es_404(client, doctor_user, db_session):
     response = client.get(f"{DOCTOR_PATIENTS_PATH}/{patient.id}")
 
     assert response.status_code == 404
+
+
+def _add_appointment(session, doctor: Doctor, patient: User, starts: datetime) -> Appointment:
+    appointment = Appointment(
+        patient_id=patient.id,
+        doctor_id=doctor.id,
+        starts_at=starts,
+        ends_at=starts + timedelta(minutes=30),
+        status=AppointmentStatus.SCHEDULED,
+        modality=AppointmentModality.VIDEO,
+    )
+    session.add(appointment)
+    session.commit()
+    session.refresh(appointment)
+
+    return appointment
+
+
+def test_turnos_por_paciente_devuelve_solo_los_del_paciente(
+    client, doctor_user, db_session
+):
+    doctor = doctor_row(db_session, doctor_user)
+    paciente = create_patient(db_session, email="turnos@example.com")
+    otro = create_patient(db_session, email="otro-turnos@example.com")
+    link_patient(db_session, doctor, paciente)
+    link_patient(db_session, doctor, otro)
+
+    starts = datetime(2030, 6, 15, 10, 0, tzinfo=ZoneInfo("UTC"))
+    appt = _add_appointment(db_session, doctor, paciente, starts)
+    _add_appointment(db_session, doctor, otro, starts)
+
+    login_as(client, doctor_user)
+    response = client.get(f"{DOCTOR_PATIENTS_PATH}/{paciente.id}/appointments")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [item["id"] for item in body] == [appt.id]
+    assert body[0]["patient_id"] == paciente.id
+
+
+def test_turnos_por_paciente_sin_vinculo_es_404(client, doctor_user, db_session):
+    other = second_doctor(db_session)
+    patient = create_patient(db_session, email="ajeno-turnos@example.com")
+    link_patient(db_session, other, patient)
+
+    login_as(client, doctor_user)
+    response = client.get(f"{DOCTOR_PATIENTS_PATH}/{patient.id}/appointments")
+
+    assert response.status_code == 404
+
+
+def test_turnos_por_paciente_sin_sesion_es_401(client):
+    response = client.get(f"{DOCTOR_PATIENTS_PATH}/1/appointments")
+
+    assert response.status_code == 401
 
 
 def test_vincular_por_dni(client, doctor_user, db_session):

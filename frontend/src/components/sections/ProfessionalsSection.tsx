@@ -22,7 +22,7 @@ export function ProfessionalCard({ professional, featured = false }: Professiona
         }`}
       >
         <div className="flex items-start gap-4">
-          <Avatar name={professional.name} size="lg" />
+          <Avatar name={professional.name} src={professional.photo ?? undefined} size="lg" />
           <div className="min-w-0">
             <h3 className="truncate font-bold text-sky-900 group-hover:text-sky-700 transition-colors">
               {professional.name}

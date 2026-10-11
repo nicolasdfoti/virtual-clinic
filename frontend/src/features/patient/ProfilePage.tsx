@@ -1,4 +1,5 @@
 import { Badge } from '../../components/ui'
+import { ProfilePhotoCard } from '../auth/ProfilePhotoCard'
 import { ProfileForm } from './ProfileForm'
 import { usePatientProfile } from './usePatientProfile'
 
@@ -26,6 +27,8 @@ export function ProfilePage() {
       </header>
 
       <div className="mt-6">
+        <ProfilePhotoCard />
+
         {isLoading && (
           <p role="status" className="text-slate-500">
             Cargando tu perfil…

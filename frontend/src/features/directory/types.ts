@@ -4,5 +4,6 @@ export type PublicDoctor = {
   name: string
   specialty: string
   license_number: string
+  photo: string | null
   bio: string | null
 }

@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toZonedTime } from 'date-fns-tz'
 
-import { Card } from '../../components/ui'
+import { Avatar, Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 import { ApiError } from '../../services/api'
 import { DoctorProfileRequired } from './DoctorProfileRequired'
@@ -136,7 +136,12 @@ export function DoctorDashboard() {
                       to={`/app/medico/turnos/${appointment.id}`}
                       className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-white p-4 hover:border-sky-300 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <span className="font-medium text-sky-900">
+                      <span className="flex items-center gap-3 font-medium text-sky-900">
+                        <Avatar
+                          name={appointment.patient_name || 'Paciente'}
+                          src={appointment.patient_photo ?? undefined}
+                          size="sm"
+                        />
                         {appointment.patient_name || 'Paciente'}
                       </span>
                       <span className="text-sm text-slate-600">

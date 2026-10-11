@@ -55,6 +55,7 @@ class DoctorPatientListItem(BaseModel):
     id: int
     first_name: str
     last_name: str
+    photo: str | None = None
     dni: str | None = None
     insurance_provider: str | None = None
     next_appointment: DoctorNextAppointment | None = None
@@ -73,6 +74,7 @@ class DoctorAppointmentDetail(BaseModel):
     id: int
     patient_id: int
     patient_name: str | None = None
+    patient_photo: str | None = None
     patient_dni: str | None = None
     starts_at: datetime
     ends_at: datetime
@@ -91,6 +93,7 @@ class DoctorPatientDetail(BaseModel):
     id: int
     first_name: str
     last_name: str
+    photo: str | None = None
     email: EmailStr
     dni: str | None = None
     birth_date: date | None = None

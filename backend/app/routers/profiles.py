@@ -14,6 +14,7 @@ from app.dependencies import get_current_doctor, get_current_ready_user
 from app.models.doctor import Doctor
 from app.models.enums import Role
 from app.models.user import User
+from app.schemas.photo import PhotoUpdateRequest, PhotoUpdateResponse
 from app.schemas.profile import (
     AdminViewOfDoctorProfileResponse,
     AdminViewOfPatientProfileResponse,
@@ -58,6 +59,7 @@ def get_my_profile(
             email=current_user.email,
             first_name=current_user.first_name,
             last_name=current_user.last_name,
+            photo=current_user.photo,
             role=current_user.role.value,
             dni=profile.dni if profile else None,
             birth_date=profile.birth_date if profile else None,
@@ -89,6 +91,7 @@ def get_my_profile(
             email=current_user.email,
             first_name=current_user.first_name,
             last_name=current_user.last_name,
+            photo=current_user.photo,
             role=current_user.role.value,
             specialty=doctor.specialty,
             license_number=doctor.license_number,
@@ -104,6 +107,7 @@ def get_my_profile(
             email=current_user.email,
             first_name=current_user.first_name,
             last_name=current_user.last_name,
+            photo=current_user.photo,
             role=current_user.role.value,
             created_at=current_user.created_at,
         )
@@ -169,6 +173,7 @@ def get_user_profile(
             user_id=target.id,
             first_name=target.first_name,
             last_name=target.last_name,
+            photo=target.photo,
             specialty=doctor.specialty,
             license_number=doctor.license_number,
             bio=doctor.bio,
@@ -189,6 +194,7 @@ def get_user_profile(
                 email=target.email,
                 first_name=target.first_name,
                 last_name=target.last_name,
+                photo=target.photo,
                 specialty=doctor.specialty,
                 license_number=doctor.license_number,
                 bio=doctor.bio,
@@ -203,6 +209,7 @@ def get_user_profile(
                 email=target.email,
                 first_name=target.first_name,
                 last_name=target.last_name,
+                photo=target.photo,
                 dni=profile.dni if profile else None,
                 birth_date=profile.birth_date if profile else None,
                 sex=profile.sex if profile else None,
@@ -227,6 +234,7 @@ def get_user_profile(
                 email=target.email,
                 first_name=target.first_name,
                 last_name=target.last_name,
+                photo=target.photo,
                 specialty="",
                 license_number="",
                 bio=None,
@@ -249,6 +257,7 @@ def get_user_profile(
                 email=target.email,
                 first_name=target.first_name,
                 last_name=target.last_name,
+                photo=target.photo,
                 specialty=doctor.specialty,
                 license_number=doctor.license_number,
                 bio=doctor.bio,
@@ -263,6 +272,7 @@ def get_user_profile(
                 email=target.email,
                 first_name=target.first_name,
                 last_name=target.last_name,
+                photo=target.photo,
                 dni=profile.dni if profile else None,
                 birth_date=profile.birth_date if profile else None,
                 sex=profile.sex if profile else None,
@@ -287,6 +297,7 @@ def get_user_profile(
                 email=target.email,
                 first_name=target.first_name,
                 last_name=target.last_name,
+                photo=target.photo,
                 specialty="",
                 license_number="",
                 bio=None,
@@ -298,6 +309,27 @@ def get_user_profile(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=PROFILE_NOT_FOUND,
     )
+
+
+@router.put(
+    "/me/photo",
+    response_model=PhotoUpdateResponse,
+)
+def update_my_photo(
+    payload: PhotoUpdateRequest,
+    current_user: User = Depends(get_current_ready_user),
+    db: Session = Depends(get_db),
+):
+    """Alta, cambio o borrado de la propia foto de perfil.
+
+    Cualquier usuario autenticado puede cambiar solo la suya: el destinatario
+    sale del token, nunca del body.
+    """
+    current_user.photo = payload.photo
+    db.commit()
+    db.refresh(current_user)
+
+    return PhotoUpdateResponse(photo=current_user.photo)
 
 
 @router.patch(
@@ -325,6 +357,7 @@ def update_doctor_bio(
         email=current_doctor.user.email,
         first_name=current_doctor.user.first_name,
         last_name=current_doctor.user.last_name,
+        photo=current_doctor.user.photo,
         role=Role.DOCTOR.value,
         specialty=current_doctor.specialty,
         license_number=current_doctor.license_number,

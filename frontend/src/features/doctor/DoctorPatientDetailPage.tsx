@@ -3,7 +3,7 @@ import { forwardRef, useState, type TextareaHTMLAttributes } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { Link, useParams } from 'react-router-dom'
 
-import { Badge, Card, TextField } from '../../components/ui'
+import { Avatar, Badge, Card, TextField } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 import { ApiError, apiFileUrl } from '../../services/api'
 import {
@@ -11,8 +11,8 @@ import {
   useCancelPrescription,
   useCreateOrder,
   useCreatePrescription,
-  useDoctorAppointments,
   useDoctorPatient,
+  usePatientAppointments,
   usePatientOrders,
   usePatientPrescriptions,
 } from './hooks'
@@ -531,8 +531,8 @@ function OrdersTab({
 }
 
 function AppointmentsTab({ patientId }: { patientId: number }) {
-  const { data, isLoading } = useDoctorAppointments()
-  const appointments = (data ?? []).filter((appointment) => appointment.patient_id === patientId)
+  const { data, isLoading } = usePatientAppointments(patientId)
+  const appointments = data ?? []
 
   if (isLoading) {
     return <p className="py-8 text-center text-slate-500">Cargando turnos…</p>
@@ -611,6 +611,11 @@ export function DoctorPatientDetailPage() {
       {data && (
         <>
           <header className="mt-4 flex flex-wrap items-center gap-3">
+            <Avatar
+              name={`${data.first_name} ${data.last_name}`}
+              src={data.photo ?? undefined}
+              size="lg"
+            />
             <h1 className="text-2xl font-bold text-sky-900 sm:text-3xl">
               {data.first_name} {data.last_name}
             </h1>

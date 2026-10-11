@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toZonedTime } from 'date-fns-tz'
-import { Card } from '../../components/ui'
+import { Avatar, Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 import { useCancelAppointment } from './hooks'
 import type { Appointment } from './types'
@@ -83,7 +83,14 @@ export function NextAppointmentCard({ appointment }: NextAppointmentCardProps) {
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
             <dt className="text-sm text-slate-500">Médico</dt>
-            <dd className="font-medium text-slate-900">{appointment.doctor_name || '—'}</dd>
+            <dd className="mt-1 flex items-center gap-2 font-medium text-slate-900">
+              <Avatar
+                name={appointment.doctor_name || 'Médico'}
+                src={appointment.doctor_photo ?? undefined}
+                size="sm"
+              />
+              {appointment.doctor_name || '—'}
+            </dd>
           </div>
           <div>
             <dt className="text-sm text-slate-500">Fecha y hora</dt>

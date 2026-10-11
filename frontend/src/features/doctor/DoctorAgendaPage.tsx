@@ -4,7 +4,7 @@ import { es } from 'date-fns/locale'
 import { toZonedTime } from 'date-fns-tz'
 import { useDoctorAppointments, useCancelAppointment, useCompleteAppointment, useNoShowAppointment } from './hooks'
 import type { DoctorAppointment } from './types'
-import { Card } from '../../components/ui'
+import { Avatar, Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 import { DoctorAvailabilityEditor } from './DoctorAvailabilityEditor'
 
@@ -56,6 +56,11 @@ function AppointmentCard({
     <Card variant="outlined" padding="lg">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <Avatar
+            name={appointment.patient_name || 'Paciente'}
+            src={appointment.patient_photo ?? undefined}
+            size="md"
+          />
           <div className="flex flex-col gap-1">
             <span className="font-bold text-sky-900">{appointment.patient_name || 'Paciente'}</span>
             <span className="text-sm text-slate-600">{formatDateTime(appointment.starts_at)}</span>

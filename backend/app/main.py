@@ -21,6 +21,7 @@ from app.routers import (
     doctor_clinical_notes,
     doctor_patient_files,
     doctor_time_off,
+    notifications,
     patient_clinical_notes,
     patient_files,
     patient_prescriptions,
@@ -147,6 +148,11 @@ app.include_router(
 
 app.include_router(
     patient_prescriptions.router,
+    prefix="/api",
+)
+
+app.include_router(
+    notifications.router,
     prefix="/api",
 )
 

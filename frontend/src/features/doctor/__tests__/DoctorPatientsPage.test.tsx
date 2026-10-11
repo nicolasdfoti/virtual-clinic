@@ -20,6 +20,7 @@ function patient(overrides: Partial<DoctorPatient> = {}): DoctorPatient {
     id: 1,
     first_name: 'Ana',
     last_name: 'Ruiz',
+    photo: null,
     dni: '12345678',
     insurance_provider: 'OSDE',
     next_appointment: null,

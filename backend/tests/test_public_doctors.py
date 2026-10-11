@@ -7,7 +7,7 @@ from tests.conftest import create_doctor, create_user
 
 PUBLIC_PATH = "/api/public/doctors"
 
-ALLOWED_FIELDS = {"id", "name", "specialty", "license_number", "bio"}
+ALLOWED_FIELDS = {"id", "name", "specialty", "license_number", "photo", "bio"}
 
 
 def test_sin_sesion_devuelve_medicos_activos(client, db_session, doctor_user):

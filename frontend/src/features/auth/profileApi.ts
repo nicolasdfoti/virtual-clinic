@@ -6,6 +6,7 @@ export interface ProfileDetailResponse {
   user_id: number
   first_name: string
   last_name: string
+  photo?: string | null
   email: string
   specialty?: string
   license_number?: string

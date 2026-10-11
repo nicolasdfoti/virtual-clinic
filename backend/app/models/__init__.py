@@ -26,6 +26,7 @@ from app.models.enums import (
     PrescriptionStatus,
     Role,
 )
+from app.models.notification import Notification
 from app.models.patient_file import PatientFile
 from app.models.prescription import MedicalOrder
 from app.models.patient_profile import PatientProfile
@@ -47,6 +48,7 @@ __all__ = [
     "MedicalOrder",
     "MedicalOrderStatus",
     "MedicalOrderType",
+    "Notification",
     "PatientFile",
     "PatientProfile",
     "Prescription",

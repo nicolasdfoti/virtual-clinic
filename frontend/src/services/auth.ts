@@ -9,6 +9,8 @@ export type Session = {
   last_name: string
   role: Role
   is_active: boolean
+  /** Foto de perfil como data URL, o null si no cargó ninguna. */
+  photo: string | null
   must_change_password: boolean
 }
 
