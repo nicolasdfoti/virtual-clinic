@@ -10,23 +10,28 @@ interface ProfessionalCardProps {
 
 export function ProfessionalCard({ professional, featured = false }: ProfessionalCardProps) {
   return (
-    <Card
-      variant="interactive"
-      padding="lg"
-      className={`flex h-full flex-col ${featured ? 'ring-2 ring-sky-300' : ''}`}
+    <Link
+      to={`/professionals/${professional.id}`}
+      className="block h-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
     >
-      <div className="flex items-start gap-4">
-        <Avatar name={professional.name} size="lg" />
-        <div className="min-w-0">
-          <h3 className="truncate font-bold text-sky-900">{professional.name}</h3>
-          <p className="mt-1 text-sm text-slate-600">{professional.specialty}</p>
-          <p className="text-xs text-slate-500">Matrícula: {professional.license_number}</p>
+      <Card
+        variant="interactive"
+        padding="lg"
+        className={`flex h-full flex-col ${featured ? 'ring-2 ring-sky-300' : ''}`}
+      >
+        <div className="flex items-start gap-4">
+          <Avatar name={professional.name} size="lg" />
+          <div className="min-w-0">
+            <h3 className="truncate font-bold text-sky-900">{professional.name}</h3>
+            <p className="mt-1 text-sm text-slate-600">{professional.specialty}</p>
+            <p className="text-xs text-slate-500">Matrícula: {professional.license_number}</p>
+          </div>
         </div>
-      </div>
-      {professional.bio && (
-        <p className="mt-4 text-sm leading-relaxed text-slate-600">{professional.bio}</p>
-      )}
-    </Card>
+        {professional.bio && (
+          <p className="mt-4 text-sm leading-relaxed text-slate-600">{professional.bio}</p>
+        )}
+      </Card>
+    </Link>
   );
 }
 

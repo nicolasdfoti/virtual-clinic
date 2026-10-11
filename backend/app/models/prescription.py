@@ -20,7 +20,6 @@ from app.models.enums import MedicalOrderStatus, MedicalOrderType, PrescriptionS
 
 if TYPE_CHECKING:
     from app.models.appointment import Appointment
-    from app.models.doctor import Doctor
     from app.models.user import User
 
 
@@ -111,6 +110,16 @@ class Prescription(Base):
     patient: Mapped["User"] = relationship(foreign_keys=[patient_id])
     doctor: Mapped["Doctor"] = relationship(foreign_keys=[doctor_id])
     appointment: Mapped["Appointment | None"] = relationship()
+
+    # Propiedades computadas para exponer user_ids en respuestas
+    # patient_id ya es FK a users.id, asi que patient_user_id = patient_id
+    @property
+    def patient_user_id(self) -> int:
+        return self.patient_id
+
+    @property
+    def doctor_user_id(self) -> int:
+        return self.doctor.user_id if self.doctor else None
 
     items: Mapped[list["PrescriptionItem"]] = relationship(
         back_populates="prescription",
@@ -278,3 +287,13 @@ class MedicalOrder(Base):
     patient: Mapped["User"] = relationship(foreign_keys=[patient_id])
     doctor: Mapped["Doctor"] = relationship(foreign_keys=[doctor_id])
     appointment: Mapped["Appointment | None"] = relationship()
+
+    # Propiedades computadas para exponer user_ids en respuestas
+    # patient_id ya es FK a users.id, asi que patient_user_id = patient_id
+    @property
+    def patient_user_id(self) -> int:
+        return self.patient_id
+
+    @property
+    def doctor_user_id(self) -> int:
+        return self.doctor.user_id if self.doctor else None

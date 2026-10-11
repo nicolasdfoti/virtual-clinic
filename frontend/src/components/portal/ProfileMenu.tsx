@@ -68,8 +68,7 @@ export function ProfileMenu() {
             <p className="truncate text-xs text-slate-500">{user.email}</p>
           </div>
 
-          {user.role === 'PATIENT' && (
-            <Link
+          <Link
               to="/app/perfil"
               role="menuitem"
               onClick={() => setIsOpen(false)}
@@ -77,7 +76,6 @@ export function ProfileMenu() {
             >
               Mi perfil
             </Link>
-          )}
 
           <Link
             to="/app/cambiar-contrasena"

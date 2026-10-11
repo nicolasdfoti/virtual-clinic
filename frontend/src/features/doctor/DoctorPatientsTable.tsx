@@ -43,17 +43,19 @@ export function DoctorPatientsTable({
             <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">
               Próximo turno
             </th>
-            <th scope="col" className="px-4 py-3 text-right font-semibold text-slate-600">
-              <span className="sr-only">Acciones</span>
-            </th>
           </tr>
         </thead>
 
         <tbody className="divide-y divide-slate-100">
           {patients.map((patient) => (
             <tr key={patient.id}>
-              <td className="px-4 py-3 font-medium text-sky-900">
-                {patient.last_name}, {patient.first_name}
+              <td className="px-4 py-3">
+                <Link
+                  to={`/app/medico/pacientes/${patient.id}`}
+                  className="font-medium text-sky-900 hover:underline"
+                >
+                  {patient.last_name}, {patient.first_name}
+                </Link>
               </td>
               <td className="px-4 py-3 text-slate-600">
                 {patient.dni ?? '—'}
@@ -80,14 +82,6 @@ export function DoctorPatientsTable({
                 ) : (
                   '—'
                 )}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <Link
-                  to={`/app/medico/pacientes/${patient.id}`}
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-50"
-                >
-                  Ver perfil
-                </Link>
               </td>
             </tr>
           ))}

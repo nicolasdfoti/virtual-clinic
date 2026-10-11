@@ -75,6 +75,16 @@ describe('AdminPatientsPage', () => {
     expect(screen.getByText('OSDE')).toBeInTheDocument()
   })
 
+  it('enlaza al perfil del paciente usando su id de usuario', async () => {
+    mockFetchRoutes([patientsRoute([patient({ id: 42 })])])
+
+    renderPage()
+
+    const link = await screen.findByRole('link', { name: 'Ana Activa' })
+
+    expect(link).toHaveAttribute('href', '/app/perfiles/42')
+  })
+
   it('filtra por estado inactivo', async () => {
     const user = userEvent.setup()
 

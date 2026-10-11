@@ -17,6 +17,7 @@ import {
   usePatientPrescriptions,
 } from './hooks'
 import { ClinicalNotesTab } from './ClinicalNotesTab'
+import { DoctorProfileRequired } from './DoctorProfileRequired'
 import { PatientFilesTab } from './PatientFilesTab'
 import { formatDateTime } from '../../lib/format'
 import {
@@ -569,12 +570,23 @@ export function DoctorPatientDetailPage() {
   const { data: orders, isLoading: ordersLoading } = usePatientOrders(id)
 
   const notFound = error instanceof ApiError && error.status === 404
+  const missingDoctorProfile = error instanceof ApiError && error.status === 403
+  const invalidId = !Number.isFinite(id) || id <= 0
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link to="/app/medico" className="text-sm font-medium text-sky-700 hover:underline">
+      <Link to="/app/medico/pacientes" className="text-sm font-medium text-sky-700 hover:underline">
         ← Volver a mis pacientes
       </Link>
+
+      {invalidId && (
+        <p
+          role="alert"
+          className="mt-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600"
+        >
+          No encontramos ese paciente entre los que atendés.
+        </p>
+      )}
 
       {isLoading && (
         <p role="status" className="mt-6 text-slate-500">
@@ -582,7 +594,13 @@ export function DoctorPatientDetailPage() {
         </p>
       )}
 
-      {isError && (
+      {missingDoctorProfile && (
+        <div className="mt-6">
+          <DoctorProfileRequired />
+        </div>
+      )}
+
+      {isError && !missingDoctorProfile && (
         <p role="alert" className="mt-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
           {notFound
             ? 'No encontramos ese paciente entre los que atendés.'

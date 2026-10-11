@@ -163,8 +163,10 @@ def book_appointment(
     return AppointmentPatientResponse(
         id=appt.id,
         doctor_id=appt.doctor_id,
+        doctor_user_id=doctor.user_id if doctor else None,
         doctor_name=_format_name(doctor.user) if hasattr(doctor, "user") else None,
         patient_id=appt.patient_id,
+        patient_user_id=current_user.id,
         patient_name=_format_name(current_user),
         starts_at=appt.starts_at,
         ends_at=appt.ends_at,
@@ -212,8 +214,10 @@ def list_my_appointments(
             AppointmentPatientResponse(
                 id=appt.id,
                 doctor_id=appt.doctor_id,
+                doctor_user_id=doctor.user_id if doctor else None,
                 doctor_name=doc_name,
                 patient_id=appt.patient_id,
+                patient_user_id=patient.id if patient else None,
                 patient_name=pat_name,
                 starts_at=appt.starts_at,
                 ends_at=appt.ends_at,

@@ -88,7 +88,9 @@ class PrescriptionResponse(BaseModel):
     id: int
     folio: str
     patient_id: int
+    patient_user_id: int
     doctor_id: int
+    doctor_user_id: int
     appointment_id: Optional[int]
     issued_at: datetime
     status: PrescriptionStatus
@@ -145,7 +147,9 @@ class MedicalOrderResponse(BaseModel):
     id: int
     folio: str
     patient_id: int
+    patient_user_id: int
     doctor_id: int
+    doctor_user_id: int
     appointment_id: Optional[int]
     type: str
     studies: str
@@ -186,8 +190,10 @@ class AdminPrescriptionResponse(BaseModel):
     id: int
     folio: str
     doctor_id: int
+    doctor_user_id: int
     doctor_name: Optional[str]
     patient_id: int
+    patient_user_id: int
     patient_name: Optional[str]
     patient_dni: Optional[str]
     issued_at: datetime
@@ -205,8 +211,10 @@ class AdminMedicalOrderResponse(BaseModel):
     id: int
     folio: str
     doctor_id: int
+    doctor_user_id: int
     doctor_name: Optional[str]
     patient_id: int
+    patient_user_id: int
     patient_name: Optional[str]
     patient_dni: Optional[str]
     type: str

@@ -28,6 +28,7 @@ export function useDoctorPatient(id: number) {
   return useQuery({
     queryKey: doctorPatientKey(id),
     queryFn: () => fetchDoctorPatient(id),
+    enabled: Number.isFinite(id) && id > 0,
   })
 }
 

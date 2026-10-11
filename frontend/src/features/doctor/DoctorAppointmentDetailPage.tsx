@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
+import { useAuth } from '../../context/useAuth'
 import { doctorAppointmentApi } from './api'
 import type { DoctorAppointment } from './types'
 
@@ -52,6 +53,7 @@ function formatModality(modality: DoctorAppointment['modality']): string {
 
 export function DoctorAppointmentDetailPage() {
   const { appointmentId } = useParams<{ appointmentId: string }>()
+  const { user } = useAuth()
 
   const { data: appointment, isLoading, isError, refetch } = useQuery({
     queryKey: ['doctor', 'appointment', appointmentId],
@@ -166,7 +168,11 @@ export function DoctorAppointmentDetailPage() {
         {appointment.cancelled_by && (
           <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
             <dt className="text-sm text-slate-500">Cancelado por</dt>
-            <dd className="font-medium text-slate-900">Usuario ID: {appointment.cancelled_by}</dd>
+            <dd className="font-medium text-slate-900">
+              {appointment.cancelled_by === user?.id
+                ? 'Vos'
+                : 'El paciente u otra parte'}
+            </dd>
           </div>
         )}
       </Card>

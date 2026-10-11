@@ -1,5 +1,5 @@
 import { useState } from 'react'
-
+import { Link } from 'react-router-dom'
 import { Badge, Button, Card } from '../../components/ui'
 import { ApiError } from '../../services/api'
 import { DoctorFormModal } from './DoctorFormModal'
@@ -93,9 +93,12 @@ export function AdminDoctorsPage() {
                 {data.map((doctor) => (
                   <tr key={doctor.id}>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-sky-900">
+                      <Link
+                        to={`/app/perfiles/${doctor.user_id}`}
+                        className="font-medium text-sky-900 hover:underline"
+                      >
                         {doctor.first_name} {doctor.last_name}
-                      </p>
+                      </Link>
                       <p className="text-xs text-slate-500">{doctor.email}</p>
                     </td>
                     <td className="px-4 py-3 text-slate-600">

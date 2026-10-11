@@ -63,6 +63,15 @@ class ClinicalNote(Base):
     patient: Mapped["User"] = relationship(foreign_keys=[patient_id])
     doctor: Mapped["Doctor"] = relationship(foreign_keys=[doctor_id])
 
+    # Propiedades computadas para exponer user_ids en respuestas
+    @property
+    def patient_user_id(self) -> int:
+        return self.patient_id
+
+    @property
+    def doctor_user_id(self) -> int:
+        return self.doctor.user_id if self.doctor else None
+
     amendments: Mapped[list["ClinicalNote"]] = relationship(
         back_populates="amends",
         foreign_keys=[amends_note_id],

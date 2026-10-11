@@ -4,10 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 
+import { AuthProvider } from '../../../context/AuthProvider'
 import {
+  ADMIN,
   createTestQueryClient,
   jsonResponse,
   mockFetchRoutes,
+  type FetchRoute,
 } from '../../../test/testUtils'
 import { DoctorPatientDetailPage } from '../DoctorPatientDetailPage'
 import type { DoctorPatientDetail } from '../types'
@@ -66,16 +69,25 @@ function baseRoutes(patient: DoctorPatientDetail | { detail: string }) {
 function renderPage() {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <MemoryRouter initialEntries={['/app/medico/pacientes/5']}>
-        <Routes>
-          <Route
-            path="/app/medico/pacientes/:patientId"
-            element={<DoctorPatientDetailPage />}
-          />
-        </Routes>
-      </MemoryRouter>
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/app/medico/pacientes/5']}>
+          <Routes>
+            <Route
+              path="/app/medico/pacientes/:patientId"
+              element={<DoctorPatientDetailPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
     </QueryClientProvider>,
   )
+}
+
+function authRoute(session = ADMIN): FetchRoute {
+  return {
+    test: (url) => url.endsWith('/auth/me'),
+    respond: () => jsonResponse(session),
+  }
 }
 
 describe('DoctorPatientDetailPage', () => {
@@ -127,6 +139,34 @@ describe('DoctorPatientDetailPage', () => {
       await screen.findByText(
         'No encontramos ese paciente entre los que atendés.',
       ),
+    ).toBeInTheDocument()
+  })
+
+  it('muestra un mensaje amable si la cuenta no tiene perfil de médico', async () => {
+    mockFetchRoutes([
+      authRoute(),
+      {
+        test: (url: string) => url.endsWith('/doctor/patients/5'),
+        respond: () =>
+          jsonResponse(
+            { detail: 'Tu perfil de médico no está activo.' },
+            { status: 403 },
+          ),
+      },
+      {
+        test: (url: string) => url.endsWith('/doctor/patients/5/prescriptions'),
+        respond: () => jsonResponse([], { status: 403 }),
+      },
+      {
+        test: (url: string) => url.endsWith('/doctor/patients/5/orders'),
+        respond: () => jsonResponse([], { status: 403 }),
+      },
+    ])
+
+    renderPage()
+
+    expect(
+      await screen.findByText('No tenés un perfil de médico activo'),
     ).toBeInTheDocument()
   })
 })

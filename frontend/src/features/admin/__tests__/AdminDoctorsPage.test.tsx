@@ -103,6 +103,14 @@ describe('AdminDoctorsPage', () => {
     expect(screen.getByText('MP 100')).toBeInTheDocument()
   })
 
+  it('enlaza al perfil del médico con el user_id, no con el id del doctor', async () => {
+    renderPage(doctorsBackend([doctor({ id: 7, user_id: 70 })]).routes)
+
+    const link = await screen.findByRole('link', { name: 'Gonzalo Pérez' })
+
+    expect(link).toHaveAttribute('href', '/app/perfiles/70')
+  })
+
   it('desactiva un médico', async () => {
     const user = userEvent.setup()
 

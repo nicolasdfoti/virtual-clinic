@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 
 
 class ClinicalNoteCreate(BaseModel):
@@ -44,8 +44,19 @@ class ClinicalNoteResponse(BaseModel):
     amends_note_id: Optional[int]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    @computed_field
+    @property
+    def patient_user_id(self) -> int:
+        return self.patient_id
+
+    @computed_field
+    @property
+    def doctor_user_id(self) -> int | None:
+        if hasattr(self, 'doctor') and self.doctor:
+            return self.doctor.user_id
+        return None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClinicalNoteListResponse(BaseModel):

@@ -12,11 +12,13 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import About from './pages/About'
 import Professionals from './pages/Professionals'
+import ProfessionalProfilePage from './pages/ProfessionalProfilePage'
 import FAQ from './pages/FAQ'
 import Contact from './pages/Contact'
 import { TermsPage, PrivacyPage } from './pages/Legal'
 import { PatientHome } from './pages/portal/PatientHome'
-import { ProfilePage } from './features/patient/ProfilePage'
+import { MyProfilePage } from './features/auth/MyProfilePage'
+import { ProfileDetailPage } from './features/auth/ProfileDetailPage'
 import { ChangePasswordPage } from './features/auth/ChangePasswordPage'
 import { AdminDashboard } from './features/admin/AdminDashboard'
 import { AdminDoctorsPage } from './features/admin/AdminDoctorsPage'
@@ -26,6 +28,7 @@ import { AdminMedicalOrdersPage } from './features/admin/AdminMedicalOrdersPage'
 import { AdminActivityPage } from './features/admin/AdminActivityPage'
 import { AuditLogPage } from './features/admin/AuditLogPage'
 import { DoctorDashboard } from './features/doctor/DoctorDashboard'
+import { DoctorPatientsPage } from './features/doctor/DoctorPatientsPage'
 import { DoctorPatientDetailPage } from './features/doctor/DoctorPatientDetailPage'
 import { DoctorAgendaPage } from './features/doctor/DoctorAgendaPage'
 import { DoctorAppointmentDetailPage } from './features/doctor/DoctorAppointmentDetailPage'
@@ -69,8 +72,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/faq" element={<FAQ />} />
-              <Route path="/professionals" element={<Professionals />} />
-              <Route path="/professionals/:id" element={<Navigate to="/professionals" replace />} />
+<Route path="/professionals" element={<Professionals />} />
+            <Route path="/professionals/:id" element={<ProfessionalProfilePage />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/terminos" element={<TermsPage />} />
               <Route path="/privacidad" element={<PrivacyPage />} />
@@ -102,10 +105,11 @@ function App() {
                     va a poder entrar: se suma acá a allowedRoles. */}
 <Route
                     path="/app"
-                    element={<ProtectedRoute allowedRoles={['PATIENT']} />}
+                    element={<ProtectedRoute allowedRoles={['PATIENT', 'DOCTOR', 'ADMIN']} />}
                   >
                     <Route index element={<PatientHome />} />
-                    <Route path="perfil" element={<ProfilePage />} />
+                    <Route path="perfil" element={<MyProfilePage />} />
+                    <Route path="perfiles/:userId" element={<ProfileDetailPage />} />
                     <Route path="turnos" element={<PatientAppointmentsPage />} />
                     <Route path="turnos/nuevo" element={<BookAppointmentPage />} />
                     <Route path="recetas" element={<PatientPrescriptionsPage />} />
@@ -121,12 +125,7 @@ function App() {
                 >
                   <Route index element={<DoctorDashboard />} />
                   <Route path="agenda" element={<DoctorAgendaPage />} />
-                  {/* "Pacientes" comparte la tabla del panel; el detalle vive
-                      bajo este prefijo para que el nav lo marque activo. */}
-                  <Route
-                    path="pacientes"
-                    element={<Navigate to="/app/medico" replace />}
-                  />
+                  <Route path="pacientes" element={<DoctorPatientsPage />} />
                   <Route
                     path="pacientes/:patientId"
                     element={<DoctorPatientDetailPage />}

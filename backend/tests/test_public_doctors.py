@@ -58,3 +58,72 @@ def test_no_expone_datos_personales(client, db_session, doctor_user):
     assert set(item.keys()) == ALLOWED_FIELDS
     assert "email" not in item
     assert "user_id" not in item
+
+
+def test_detalle_devuelve_medico_activo(client, db_session):
+    user = create_user(
+        db_session,
+        email="medico@example.com",
+        role=Role.DOCTOR,
+        first_name="Ana",
+        last_name="Ruiz",
+    )
+    doctor = create_doctor(db_session, user, license_number="MP 100")
+
+    response = client.get(f"{PUBLIC_PATH}/{doctor.id}")
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["id"] == doctor.id
+    assert body["name"] == "Ana Ruiz"
+    assert body["specialty"] == "Clínica médica"
+    assert body["license_number"] == "MP 100"
+
+
+def test_detalle_inexistente_da_404(client):
+    assert client.get(f"{PUBLIC_PATH}/999999").status_code == 404
+
+
+def test_detalle_medico_inactivo_da_404(client, db_session):
+    user = create_user(
+        db_session,
+        email="medico-off@example.com",
+        role=Role.DOCTOR,
+    )
+    doctor = create_doctor(
+        db_session,
+        user,
+        license_number="MP 200",
+        is_active=False,
+    )
+
+    assert client.get(f"{PUBLIC_PATH}/{doctor.id}").status_code == 404
+
+
+def test_detalle_usuario_inactivo_da_404(client, db_session):
+    user = create_user(
+        db_session,
+        email="inactivo@example.com",
+        role=Role.DOCTOR,
+        is_active=False,
+    )
+    doctor = create_doctor(db_session, user, license_number="MP 300")
+
+    assert client.get(f"{PUBLIC_PATH}/{doctor.id}").status_code == 404
+
+
+def test_detalle_no_expone_datos_personales(client, db_session):
+    user = create_user(
+        db_session,
+        email="medico@example.com",
+        role=Role.DOCTOR,
+    )
+    doctor = create_doctor(db_session, user)
+
+    item = client.get(f"{PUBLIC_PATH}/{doctor.id}").json()
+
+    assert set(item.keys()) == ALLOWED_FIELDS
+    assert "email" not in item
+    assert "user_id" not in item

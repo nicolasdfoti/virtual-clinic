@@ -44,7 +44,7 @@ function AppointmentCard({
   onNoShow,
 }: {
   appointment: DoctorAppointment
-  onCancel: (id: number) => void
+  onCancel: (id: number, reason?: string) => void
   onComplete: (id: number) => void
   onNoShow: (id: number) => void
 }) {
@@ -84,7 +84,7 @@ function AppointmentCard({
               <button
                 onClick={() => {
                   const reason = prompt('Motivo de la cancelación (opcional):')
-                  if (reason !== null) onCancel(appointment.id)
+                  if (reason !== null) onCancel(appointment.id, reason || undefined)
                 }}
                 className={buttonClasses({ variant: 'danger', size: 'sm' })}
               >
@@ -119,7 +119,7 @@ function DayAppointments({
 }: {
   date: Date
   appointments: DoctorAppointment[]
-  onCancel: (id: number) => void
+  onCancel: (id: number, reason?: string) => void
   onComplete: (id: number) => void
   onNoShow: (id: number) => void
 }) {
@@ -161,8 +161,8 @@ export function DoctorAgendaPage() {
   const completeMutation = useCompleteAppointment()
   const noShowMutation = useNoShowAppointment()
 
-  const handleCancel = (id: number) => {
-    cancelMutation.mutate({ id })
+  const handleCancel = (id: number, reason?: string) => {
+    cancelMutation.mutate({ id, reason })
   }
 
   const handleComplete = (id: number) => {

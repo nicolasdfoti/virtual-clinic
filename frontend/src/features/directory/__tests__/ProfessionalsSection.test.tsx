@@ -11,12 +11,14 @@ import {
 
 const doctors = [
   {
+    id: 1,
     name: 'Ana Ruiz',
     specialty: 'Clínica médica',
     license_number: 'MP 100',
     bio: 'Atiende adultos.',
   },
   {
+    id: 2,
     name: 'Luis Soto',
     specialty: 'Cardiología',
     license_number: 'MP 200',
@@ -48,6 +50,21 @@ describe('ProfessionalsSection', () => {
     expect(await screen.findByText('Ana Ruiz')).toBeInTheDocument()
     expect(screen.getByText('Luis Soto')).toBeInTheDocument()
     expect(screen.getByText('Matrícula: MP 100')).toBeInTheDocument()
+  })
+
+  it('enlaza cada tarjeta al perfil del profesional', async () => {
+    mockFetchRoutes([
+      {
+        test: (url) => url.endsWith('/public/doctors'),
+        respond: () => new Response(JSON.stringify(doctors), { status: 200 }),
+      },
+    ])
+
+    renderSection()
+
+    const link = await screen.findByRole('link', { name: /Ana Ruiz/ })
+
+    expect(link).toHaveAttribute('href', '/professionals/1')
   })
 
   it('muestra el estado vacío si no hay médicos', async () => {

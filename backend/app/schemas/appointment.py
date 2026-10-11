@@ -20,8 +20,10 @@ class AppointmentBookRequest(BaseModel):
 class AppointmentPatientResponse(BaseModel):
     id: int
     doctor_id: int
+    doctor_user_id: int
     doctor_name: str | None = None
     patient_id: int
+    patient_user_id: int
     patient_name: str | None = None
     starts_at: datetime
     ends_at: datetime

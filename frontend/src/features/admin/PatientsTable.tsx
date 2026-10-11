@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import { Badge } from '../../components/ui'
 import { formatDate } from './format'
 import type { AdminPatient } from './types'
@@ -31,9 +33,12 @@ export function PatientsTable({ patients }: { patients: AdminPatient[] }) {
           {patients.map((patient) => (
             <tr key={patient.id}>
               <td className="px-4 py-3">
-                <p className="font-medium text-sky-900">
+                <Link
+                  to={`/app/perfiles/${patient.id}`}
+                  className="font-medium text-sky-900 hover:underline"
+                >
                   {patient.first_name} {patient.last_name}
-                </p>
+                </Link>
                 <p className="text-xs text-slate-500">{patient.email}</p>
               </td>
               <td className="px-4 py-3 text-slate-600">

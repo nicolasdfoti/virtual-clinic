@@ -25,6 +25,7 @@ from app.routers import (
     patient_files,
     patient_prescriptions,
     patients,
+    profiles,
     public,
     slots,
 )
@@ -146,6 +147,11 @@ app.include_router(
 
 app.include_router(
     patient_prescriptions.router,
+    prefix="/api",
+)
+
+app.include_router(
+    profiles.router,
     prefix="/api",
 )
 
