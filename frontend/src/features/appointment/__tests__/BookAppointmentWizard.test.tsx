@@ -14,7 +14,7 @@ import {
 } from '../../../test/testUtils'
 import { BookAppointmentWizard } from '../BookAppointmentWizard'
 
-function renderWizard(conflictOnBook = false) {
+function renderWizard(conflictOnBook = false, onBook?: (body: unknown) => void) {
   const profile = completePatientProfile(PATIENT.id)
 
   mockFetchRoutes([
@@ -52,7 +52,10 @@ function renderWizard(conflictOnBook = false) {
     },
     {
       test: (url, method) => url.includes('/appointments') && method === 'POST',
-      respond: () => {
+      respond: (_url, _method, init) => {
+        if (onBook && init?.body) {
+          onBook(JSON.parse(String(init.body)))
+        }
         if (conflictOnBook) {
           return jsonResponse(
             { detail: 'Ese horario ya fue reservado.' },
@@ -143,5 +146,37 @@ describe('BookAppointmentWizard', () => {
     expect(
       await screen.findByText(/Ese horario ya fue reservado|error/i),
     ).toBeInTheDocument()
+  })
+
+  it('envía la modalidad y el motivo elegidos en el resumen', async () => {
+    let body: unknown = null
+
+    renderWizard(false, (parsed) => {
+      body = parsed
+    })
+
+    const user = userEvent.setup()
+
+    const dayButton = await screen.findByRole('button', { name: /15 de octubre/i })
+    await user.click(dayButton)
+
+    const slotButton = await screen.findByRole('button', { name: /06:00/i })
+    await user.click(slotButton)
+
+    await screen.findByRole('heading', { name: 'Resumen del turno' })
+
+    await user.selectOptions(screen.getByLabelText('Modalidad'), 'IN_PERSON')
+    await user.type(screen.getByLabelText(/Motivo de la consulta/i), 'Dolor de cabeza')
+
+    await user.click(
+      screen.getByRole('button', { name: 'Confirmar y agendar' }),
+    )
+
+    await waitFor(() => {
+      expect(body).toMatchObject({
+        modality: 'IN_PERSON',
+        reason: 'Dolor de cabeza',
+      })
+    })
   })
 })

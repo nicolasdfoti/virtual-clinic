@@ -51,6 +51,9 @@ export const doctorAppointmentApi = {
   createAvailability: (data: { weekday: number; start_time: string; end_time: string }): Promise<DoctorAvailability> =>
     api.post<DoctorAvailability>('/doctor/availability', data),
 
+  updateAvailability: (id: number, data: { start_time?: string; end_time?: string }): Promise<DoctorAvailability> =>
+    api.put<DoctorAvailability>(`/doctor/availability/${id}`, data),
+
   deleteAvailability: (id: number): Promise<void> =>
     api.delete<void>(`/doctor/availability/${id}`),
 

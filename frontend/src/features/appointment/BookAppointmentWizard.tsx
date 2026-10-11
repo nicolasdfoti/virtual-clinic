@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -209,7 +209,7 @@ function ConfirmStep({
   doctor,
   date,
   slot,
-  formData,
+  form,
   onSubmit,
   isSubmitting,
   errorMessage,
@@ -217,12 +217,13 @@ function ConfirmStep({
   doctor: PublicDoctor | null
   date: string | null
   slot: string | null
-  formData: Partial<BookAppointmentForm>
+  form: UseFormReturn<BookAppointmentForm>
   onSubmit: (e: React.FormEvent) => void
   isSubmitting: boolean
   errorMessage?: string | null
 }) {
-  const [modality, setModality] = useState<BookAppointmentForm['modality']>(formData.modality || 'VIDEO')
+  const modality = form.watch('modality')
+  const reason = form.watch('reason')
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -254,10 +255,10 @@ function ConfirmStep({
             <dt className="text-sm text-slate-500">Modalidad</dt>
             <dd className="font-medium text-slate-900">{modality === 'VIDEO' ? 'Video' : 'Presencial'}</dd>
           </div>
-          {formData.reason && (
+          {reason && (
             <div className="sm:col-span-2">
               <dt className="text-sm text-slate-500">Motivo</dt>
-              <dd className="font-medium text-slate-900">{formData.reason}</dd>
+              <dd className="font-medium text-slate-900">{reason}</dd>
             </div>
           )}
         </dl>
@@ -270,7 +271,7 @@ function ConfirmStep({
           </label>
           <textarea
             id="reason"
-            {...formData.reason ? { defaultValue: formData.reason } : {}}
+            {...form.register('reason')}
             rows={3}
             className={inputClasses}
             placeholder="Ej: Control anual, dolor de cabeza recurrente..."
@@ -282,8 +283,7 @@ function ConfirmStep({
           <label htmlFor="modality" className={labelClasses()}>Modalidad</label>
           <select
             id="modality"
-            value={modality}
-            onChange={e => setModality(e.target.value as 'VIDEO' | 'IN_PERSON')}
+            {...form.register('modality')}
             className={selectClasses}
           >
             <option value="VIDEO">Videollamada</option>
@@ -438,7 +438,7 @@ export function BookAppointmentWizard() {
           doctor={doctor}
           date={selectedDate}
           slot={selectedSlot}
-          formData={form.getValues()}
+          form={form}
           onSubmit={onSubmit}
           isSubmitting={bookMutation.isPending}
           errorMessage={errorMessage}

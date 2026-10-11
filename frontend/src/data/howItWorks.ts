@@ -24,8 +24,8 @@ export const howItWorksSteps: HowItWorksStep[] = [
   {
     id: 'step-3',
     number: 3,
-    title: 'Consultá por videollamada y recibí tus recetas y órdenes en tu portal',
-    description: 'La consulta es por videollamada desde el navegador y todo queda registrado en tu portal.',
+    title: 'Consultá por videollamada o presencial y recibí tus recetas y órdenes en tu portal',
+    description: 'Elegí la consulta por videollamada desde el navegador o el turno presencial, y todo queda registrado en tu portal.',
     icon: '💻',
   },
 ]

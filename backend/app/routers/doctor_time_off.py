@@ -52,3 +52,33 @@ def create_time_off(
     db.refresh(row)
 
     return row
+
+
+@router.delete(
+    "/{time_off_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_time_off(
+    time_off_id: int,
+    doctor: Doctor = Depends(get_current_doctor),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(DoctorTimeOff)
+        .filter(
+            DoctorTimeOff.id == time_off_id,
+            DoctorTimeOff.doctor_id == doctor.id,
+        )
+        .first()
+    )
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No encontramos ese bloqueo de tiempo.",
+        )
+
+    db.delete(row)
+    db.commit()
+
+    return None

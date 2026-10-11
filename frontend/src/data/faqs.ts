@@ -12,7 +12,7 @@ export const faqs: FAQ[] = [
     id: 'faq-general-consulta',
     question: '¿Cómo van a ser las consultas?',
     answer:
-      'La idea es que las consultas sean por videollamada desde el navegador, sin instalar aplicaciones. Cuando lancemos el servicio vas a poder elegir día y horario, y la receta y las órdenes de estudios van a quedar en tu portal para consultarlas cuando quieras.',
+      'Las consultas pueden ser por videollamada desde el navegador, sin instalar aplicaciones, o presenciales. Elegís día y horario, y la receta y las órdenes de estudios quedan en tu portal para consultarlas cuando quieras.',
     category: 'general',
   },
   {

@@ -39,7 +39,7 @@ export function Footer() {
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
               Plataforma de telemedicina que conecta pacientes con profesionales de la salud
-              para consultas por videollamada desde el navegador.
+              para consultas por videollamada o presenciales.
             </p>
           </div>
 
