@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.rate_limit import upload_limiter
 from app.database import get_db
 from app.dependencies import get_current_ready_user
 from app.models.enums import Role
@@ -21,6 +22,7 @@ MAX_FILE_SIZE_BYTES = settings.MAX_FILE_SIZE_MB * 1024 * 1024
 
 
 @router.post("/patients/me/files", status_code=status.HTTP_201_CREATED)
+@upload_limiter
 async def upload_my_file(
     request: Request,
     file: UploadFile,
@@ -40,9 +42,16 @@ async def upload_my_file(
             detail="Debe seleccionar un archivo.",
         )
 
-    # Validar tamaño antes de leer todo (UploadFile puede ser grande).
-    content = await file.read()
-    await file.close()
+    # Leer de a bloques y cortar apenas supera el maximo (no cargar todo en RAM).
+    try:
+        content = await patient_files.read_upload_within_limit(file)
+    except PatientFileError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        )
+    finally:
+        await file.close()
 
     try:
         patient_file = patient_files.upload_file(

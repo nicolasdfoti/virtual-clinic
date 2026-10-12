@@ -1,9 +1,13 @@
 """Middleware para extraer email del body en login/register y guardarlo en request.state
 para que el rate limiter pueda usarlo como parte de la key (IP + email)."""
 import json
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+
+from app.core.config import ACCESS_TOKEN_COOKIE_NAME
+from app.core.security import decode_access_token
 
 
 class LoginEmailExtractorMiddleware(BaseHTTPMiddleware):
@@ -37,11 +41,20 @@ class LoginEmailExtractorMiddleware(BaseHTTPMiddleware):
 
 
 class UserIdExtractorMiddleware(BaseHTTPMiddleware):
-    """Extrae user_id del usuario autenticado y lo guarda en request.state
-    para rate limiting en endpoints autenticados (subida archivos, etc.)."""
+    """Extrae el user_id del JWT de la cookie y lo guarda en request.state.
+
+    Lo usa `get_ip_userid_key` para rate-limitar por usuario en endpoints
+    autenticados (subida de archivos). Es best-effort: si no hay cookie o el
+    token es invalido, se sigue sin user_id (la key cae a solo-IP).
+    """
 
     async def dispatch(self, request: Request, call_next):
-        # El user_id se puede obtener del token JWT en el cookie
-        # Pero como la autenticacion ocurre via dependencias, usamos un enfoque
-        # diferente: el endpoint setea request.state.user_id despues de autenticar.
+        token = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)
+
+        if token:
+            payload = decode_access_token(token)
+
+            if payload is not None:
+                request.state.user_id = payload.subject
+
         return await call_next(request)

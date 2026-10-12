@@ -21,6 +21,10 @@ router = APIRouter(prefix="/doctors", tags=["Slots"])
 
 CLINIC_TZ = ZoneInfo(CLINIC_TIMEZONE)
 
+# Tope del rango consultable en un solo request. Evita que alguien pida anos
+# enteros y nos haga generar millones de slots.
+MAX_SLOT_RANGE_DAYS = 90
+
 
 @router.get(
     "/{doctor_id}/slots",
@@ -50,6 +54,12 @@ def list_doctor_slots(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="La fecha 'from' no puede ser posterior a 'to'.",
+        )
+
+    if (to_date - from_date).days > MAX_SLOT_RANGE_DAYS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"El rango de fechas no puede superar los {MAX_SLOT_RANGE_DAYS} días.",
         )
 
     from_dt = scheduling.local_date_start(from_date)

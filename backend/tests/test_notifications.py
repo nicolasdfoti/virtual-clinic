@@ -20,6 +20,23 @@ def _mk_dt(year=2030, month=6, day=15, hour=10, minute=0):
     )
 
 
+def _add_availability(session, doctor_id, weekday):
+    """Agenda semanal amplia para que el turno caiga dentro de la franja."""
+    from datetime import time as dtime
+
+    from app.models.doctor_availability import DoctorAvailability
+
+    session.add(
+        DoctorAvailability(
+            doctor_id=doctor_id,
+            weekday=weekday,
+            start_time=dtime(8, 0),
+            end_time=dtime(18, 0),
+        )
+    )
+    session.commit()
+
+
 def _make_patient(session, email="pac@test.com", dni="12345678"):
     user = create_user(session, email=email, role=Role.PATIENT)
     session.add(
@@ -143,6 +160,8 @@ def test_booking_notifies_doctor(client, db_session, doctor_user):
         .first()
     )
 
+    _add_availability(db_session, doctor_row.id, _mk_dt().weekday())
+
     login_as(client, patient)
     resp = client.post(
         "/api/appointments",
@@ -173,6 +192,8 @@ def test_cancel_by_patient_notifies_doctor(client, db_session, doctor_user):
         .filter(Doctor.user_id == doctor_user.id)
         .first()
     )
+
+    _add_availability(db_session, doctor_row.id, _mk_dt().weekday())
 
     login_as(client, patient)
     book = client.post(

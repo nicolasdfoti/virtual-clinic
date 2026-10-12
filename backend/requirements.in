@@ -15,12 +15,18 @@ python-dotenv==1.2.4
 
 # Auth: migracion de passlib+python-jose a pwdlib (argon2) + PyJWT
 # pwdlib usa argon2id por defecto, PyJWT es el standard para JWT.
-# Argon2 requiere la librería de sistema libargon2; en Docker se instala via apt.
-pwdlib==0.3.1
+# El extra [argon2] trae argon2-cffi, que publica wheels con la libargon2
+# embebida: no hace falta instalar nada via apt ni compilar extensiones.
+# El extra [bcrypt] mantiene la verificacion de hashes legacy (rehashing
+# transparente al login); bcrypt publica wheels para Linux y Windows.
+pwdlib[argon2,bcrypt]==0.3.1
 pyjwt==2.15.1
 
 # Rate limiting: slowapi (usa limits + starlette). Wheel pura.
 slowapi==0.1.10
 
-# Security headers middleware
-starlette-context==0.5.1
+# Backend de rate limiting en produccion (RATE_LIMIT_STORAGE_URI=redis://...).
+redis==7.4.1
+
+# Generacion de PDF de recetas/ordenes. Wheel pura (pure Python).
+reportlab==5.0.1

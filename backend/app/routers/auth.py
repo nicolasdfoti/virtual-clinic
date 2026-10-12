@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app.core.config import (
     ACCESS_TOKEN_COOKIE_NAME,
     ACCESS_TOKEN_COOKIE_PATH,
-    ACCESS_TOKEN_COOKIE_SAMESITE,
     get_settings,
 )
 from app.core.rate_limit import login_limiter, register_limiter
@@ -51,7 +50,7 @@ def set_auth_cookie(response: Response, access_token: str) -> None:
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=ACCESS_TOKEN_COOKIE_SAMESITE,
+        samesite=settings.cookie_samesite,
         path=ACCESS_TOKEN_COOKIE_PATH,
     )
 
@@ -61,7 +60,7 @@ def clear_auth_cookie(response: Response) -> None:
         key=ACCESS_TOKEN_COOKIE_NAME,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=ACCESS_TOKEN_COOKIE_SAMESITE,
+        samesite=settings.cookie_samesite,
         path=ACCESS_TOKEN_COOKIE_PATH,
     )
 

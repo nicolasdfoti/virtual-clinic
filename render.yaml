@@ -1,0 +1,71 @@
+# Blueprint de Render para el backend (virtual-clinic API).
+#
+# El frontend va aparte, en Vercel (carpeta frontend/). Ver DEPLOY.md.
+#
+# Uso: en Render -> New -> Blueprint, apuntar a este repo. Render crea la base,
+# el Redis (Key Value) y el web service Docker. Despues hay que setear a mano
+# CORS_ORIGINS con el dominio real de Vercel (quedo como sync:false).
+
+databases:
+  - name: virtual-clinic-db
+    databaseName: virtual_clinic
+    user: virtual_clinic
+    plan: free
+
+services:
+  - type: redis
+    name: virtual-clinic-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+  - type: web
+    name: virtual-clinic-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      # Frontend (Vercel) y API (Render) son sitios distintos: la cookie de
+      # sesion solo viaja con SameSite=None + Secure. El middleware de Origin
+      # actua como proteccion CSRF.
+      - key: ACCESS_TOKEN_COOKIE_SAMESITE
+        value: none
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: virtual-clinic-db
+          property: connectionString
+      - key: RATE_LIMIT_STORAGE_URI
+        fromService:
+          type: redis
+          name: virtual-clinic-redis
+          property: connectionString
+      # Completar a mano con el origen de Vercel (ej: https://mi-app.vercel.app).
+      - key: CORS_ORIGINS
+        sync: false
+      - key: STORAGE_DIR
+        value: /app/storage
+      - key: MAX_FILE_SIZE_MB
+        value: "10"
+      - key: PATIENT_VISIBLE_NOTES
+        value: "false"
+      - key: PDF_FOOTER_LEGEND
+        value: Indicacion medica
+
+# Almacenamiento persistente: en plan free el disco es efimero y los archivos
+# subidos (PatientFile) y PDFs generados se pierden en cada deploy. Con plan
+# pago, descomentar para montar un disco persistente en STORAGE_DIR.
+#
+#    disk:
+#      name: virtual-clinic-storage
+#      mountPath: /app/storage
+#      sizeGB: 1

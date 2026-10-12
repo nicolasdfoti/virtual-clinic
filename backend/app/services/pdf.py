@@ -11,6 +11,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -24,26 +25,30 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.core.config import get_settings
+from app.core.config import CLINIC_TIMEZONE, get_settings
 from app.models.enums import MedicalOrderType, PrescriptionStatus
 
 
 settings = get_settings()
-CLINIC_TZ = "America/Argentina/Buenos_Aires"
+CLINIC_TZ = ZoneInfo(CLINIC_TIMEZONE)
 
 
 def _format_dt(dt: datetime) -> str:
-    """Formatea datetime en zona de la clinica."""
+    """Formatea datetime en la zona de la clinica.
+
+    Los datetimes se guardan en UTC; los naive (SQLite) tambien representan UTC.
+    Siempre convertimos a la zona de la clinica para no mostrar corrimientos.
+    """
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=datetime.now().astimezone().tzinfo)
-    return dt.strftime("%d/%m/%Y %H:%M")
+        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    return dt.astimezone(CLINIC_TZ).strftime("%d/%m/%Y %H:%M")
 
 
 def _format_date(dt: datetime) -> str:
-    """Formatea solo fecha en zona de la clinica."""
+    """Formatea solo fecha en la zona de la clinica."""
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=datetime.now().astimezone().tzinfo)
-    return dt.strftime("%d/%m/%Y")
+        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    return dt.astimezone(CLINIC_TZ).strftime("%d/%m/%Y")
 
 
 def _sha256_file(path: Path) -> str:

@@ -10,12 +10,17 @@ import hashlib
 import uuid
 from pathlib import Path
 
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.models.patient_file import PatientFile
 from app.models.user import User
 from app.services.storage import storage as storage_backend
+
+# Tamano de cada lectura al recibir un archivo. Leer de a bloques evita que un
+# cliente mande un archivo enorme y nos llene la memoria antes de validarlo.
+_UPLOAD_CHUNK_BYTES = 1024 * 1024
 
 
 # Firma (magic bytes) -> (mime, extension). Se comparan contra el comienzo del
@@ -34,6 +39,37 @@ def _max_file_size_bytes() -> int:
 
 class PatientFileError(ValueError):
     """Error de negocio al subir/leer un archivo de paciente."""
+
+
+async def read_upload_within_limit(
+    upload: UploadFile,
+    max_bytes: int | None = None,
+) -> bytes:
+    """Lee un UploadFile de a bloques cortando apenas supera el maximo.
+
+    Se valida el tamano durante la lectura (no despues de tener todo en
+    memoria): asi un archivo gigante no nos consume RAM ni disco del sistema.
+    """
+    limit = max_bytes if max_bytes is not None else _max_file_size_bytes()
+    chunks: list[bytes] = []
+    total = 0
+
+    while True:
+        chunk = await upload.read(_UPLOAD_CHUNK_BYTES)
+
+        if not chunk:
+            break
+
+        total += len(chunk)
+
+        if total > limit:
+            raise PatientFileError(
+                f"El archivo supera el máximo de {get_settings().MAX_FILE_SIZE_MB} MB."
+            )
+
+        chunks.append(chunk)
+
+    return b"".join(chunks)
 
 
 def detect_mime(content: bytes) -> str | None:

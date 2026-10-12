@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { format } from 'date-fns'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -12,6 +13,7 @@ import {
   mockFetchRoutes,
 } from '../../../test/testUtils'
 import { DoctorAgendaPage } from '../DoctorAgendaPage'
+import { buildAgendaWeek } from '../agendaWeek'
 import type { DoctorAppointment } from '../types'
 
 afterEach(() => {
@@ -94,5 +96,32 @@ describe('DoctorAgendaPage', () => {
         reason: 'Motivo de prueba',
       })
     })
+  })
+})
+
+describe('buildAgendaWeek', () => {
+  it('ubica un turno de la madrugada (hora argentina) en el dia correcto', () => {
+    // 2030-06-10T01:00Z = 2030-06-09 22:00 en Argentina (domingo).
+    const turno = appointment({ starts_at: '2030-06-10T01:00:00.000Z' })
+
+    const { days } = buildAgendaWeek(
+      new Date('2030-06-10T01:00:00.000Z'),
+      [turno],
+    )
+
+    const diaConTurno = days.find(d => d.appointments.length > 0)
+    expect(diaConTurno).toBeDefined()
+    expect(format(diaConTurno!.date, 'yyyy-MM-dd')).toBe('2030-06-09')
+    expect(diaConTurno!.appointments).toHaveLength(1)
+  })
+
+  it('arma la semana segun la fecha de la clinica, no la del navegador', () => {
+    const { start, end } = buildAgendaWeek(
+      new Date('2030-06-10T01:00:00.000Z'),
+      [],
+    )
+
+    expect(format(start, 'yyyy-MM-dd')).toBe('2030-06-03')
+    expect(format(end, 'yyyy-MM-dd')).toBe('2030-06-09')
   })
 })

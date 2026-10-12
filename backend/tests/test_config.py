@@ -68,6 +68,50 @@ def test_cookie_secure_respeta_el_flag_en_desarrollo():
     assert build_settings(ENVIRONMENT="development", COOKIE_SECURE=True).cookie_secure is True
 
 
+def test_cookie_samesite_none_degrada_a_lax_sin_secure():
+    """SameSite=None sin HTTPS: el navegador descartaria la cookie, asi que en
+    desarrollo se degrada a lax."""
+    settings = build_settings(
+        ENVIRONMENT="development",
+        ACCESS_TOKEN_COOKIE_SAMESITE="none",
+    )
+
+    assert settings.cookie_samesite == "lax"
+
+
+def test_cookie_samesite_none_en_produccion():
+    settings = build_settings(
+        ENVIRONMENT="production",
+        ACCESS_TOKEN_COOKIE_SAMESITE="none",
+    )
+
+    assert settings.cookie_samesite == "none"
+
+
+def test_cookie_samesite_invalido_falla():
+    with pytest.raises(ValidationError):
+        build_settings(ACCESS_TOKEN_COOKIE_SAMESITE="a veces")
+
+
+def test_normalize_database_url_fuerza_psycopg():
+    from app.database import normalize_database_url
+
+    assert (
+        normalize_database_url("postgres://u:p@h/db")
+        == "postgresql+psycopg://u:p@h/db"
+    )
+    assert (
+        normalize_database_url("postgresql://u:p@h/db")
+        == "postgresql+psycopg://u:p@h/db"
+    )
+    # No toca URLs que ya traen driver ni otras bases.
+    assert (
+        normalize_database_url("postgresql+psycopg://u:p@h/db")
+        == "postgresql+psycopg://u:p@h/db"
+    )
+    assert normalize_database_url("sqlite:///:memory:") == "sqlite:///:memory:"
+
+
 def test_importar_app_models_registra_las_tablas():
     """Regresion: con app/models/__init__.py vacio, `import app.models` no
     registraba nada y Base.metadata.create_all() creaba cero tablas sin

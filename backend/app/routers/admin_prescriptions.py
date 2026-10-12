@@ -1,13 +1,11 @@
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from app.core.config import CLINIC_TIMEZONE
 from app.database import get_db
 from app.dependencies import require_roles
 from app.models.enums import MedicalOrderStatus, PrescriptionStatus, Role
@@ -23,11 +21,49 @@ from app.schemas.prescription import (
     AdminDoctorActivityResponse,
     DoctorActivityResponse,
 )
-from app.services import pdf, prescriptions, storage, audit
+from app.services import audit, pdf, prescriptions, scheduling, storage
 
 router = APIRouter(prefix="/admin/prescriptions", tags=["Admin prescriptions"])
 
-CLINIC_TZ = ZoneInfo(CLINIC_TIMEZONE)
+
+def _load_doctors(db: Session, doctor_ids: set[int]) -> dict[int, Doctor]:
+    """Carga medicos (con su usuario) en una sola consulta."""
+    if not doctor_ids:
+        return {}
+    rows = (
+        db.query(Doctor)
+        .options(joinedload(Doctor.user))
+        .filter(Doctor.id.in_(doctor_ids))
+        .all()
+    )
+    return {d.id: d for d in rows}
+
+
+def _load_patients_and_profiles(
+    db: Session, patient_ids: set[int]
+) -> tuple[dict[int, User], dict[int, PatientProfile]]:
+    """Carga pacientes y perfiles en dos consultas, sin N+1."""
+    if not patient_ids:
+        return {}, {}
+    users = db.query(User).filter(User.id.in_(patient_ids)).all()
+    profiles = (
+        db.query(PatientProfile)
+        .filter(PatientProfile.user_id.in_(patient_ids))
+        .all()
+    )
+    return {u.id: u for u in users}, {p.user_id: p for p in profiles}
+
+
+def _doctor_name(doctor: Doctor | None) -> str | None:
+    if doctor and doctor.user:
+        return f"{doctor.user.first_name} {doctor.user.last_name}".strip()
+    return None
+
+
+def _patient_name(patient: User | None) -> str | None:
+    if patient:
+        return f"{patient.first_name} {patient.last_name}".strip()
+    return None
 
 
 @router.get("", response_model=AdminPrescriptionListResponse)
@@ -57,12 +93,12 @@ def list_all_prescriptions(
 
     if from_date is not None:
         query = query.filter(
-            Prescription.issued_at >= CLINIC_TZ.localize(datetime.combine(from_date, datetime.min.time()))
+            Prescription.issued_at >= scheduling.local_date_start(from_date)
         )
 
     if to_date is not None:
         query = query.filter(
-            Prescription.issued_at <= CLINIC_TZ.localize(datetime.combine(to_date, datetime.max.time()))
+            Prescription.issued_at <= scheduling.local_date_end(to_date)
         )
 
     if q and q.strip():
@@ -87,17 +123,26 @@ def list_all_prescriptions(
         .all()
     )
 
+    doctors = _load_doctors(db, {p.doctor_id for p in rows})
+    patients, profiles = _load_patients_and_profiles(
+        db, {p.patient_id for p in rows}
+    )
+
+    item_counts: dict[int, int] = {}
+    if rows:
+        counts = (
+            db.query(PrescriptionItem.prescription_id, func.count())
+            .filter(PrescriptionItem.prescription_id.in_([p.id for p in rows]))
+            .group_by(PrescriptionItem.prescription_id)
+            .all()
+        )
+        item_counts = {prescription_id: count for prescription_id, count in counts}
+
     results = []
     for p in rows:
-        doctor = db.get(Doctor, p.doctor_id)
-        patient = db.get(User, p.patient_id)
-        profile = db.query(PatientProfile).filter(PatientProfile.user_id == p.patient_id).first()
-
-        doc_name = f"{doctor.user.first_name} {doctor.user.last_name}".strip() if doctor and doctor.user else None
-        pat_name = f"{patient.first_name} {patient.last_name}".strip() if patient else None
-        pat_dni = profile.dni if profile else None
-
-        item_count = db.query(PrescriptionItem).filter(PrescriptionItem.prescription_id == p.id).count()
+        doctor = doctors.get(p.doctor_id)
+        patient = patients.get(p.patient_id)
+        profile = profiles.get(p.patient_id)
 
         results.append(
             AdminPrescriptionResponse(
@@ -105,15 +150,15 @@ def list_all_prescriptions(
                 folio=p.folio,
                 doctor_id=p.doctor_id,
                 doctor_user_id=p.doctor_user_id,
-                doctor_name=doc_name,
+                doctor_name=_doctor_name(doctor),
                 patient_id=p.patient_id,
                 patient_user_id=p.patient_user_id,
-                patient_name=pat_name,
-                patient_dni=pat_dni,
+                patient_name=_patient_name(patient),
+                patient_dni=profile.dni if profile else None,
                 issued_at=p.issued_at,
                 status=p.status,
                 cancel_reason=p.cancel_reason,
-                item_count=item_count,
+                item_count=item_counts.get(p.id, 0),
             )
         )
 
@@ -162,12 +207,12 @@ def list_all_medical_orders(
 
     if from_date is not None:
         query = query.filter(
-            MedicalOrder.issued_at >= CLINIC_TZ.localize(datetime.combine(from_date, datetime.min.time()))
+            MedicalOrder.issued_at >= scheduling.local_date_start(from_date)
         )
 
     if to_date is not None:
         query = query.filter(
-            MedicalOrder.issued_at <= CLINIC_TZ.localize(datetime.combine(to_date, datetime.max.time()))
+            MedicalOrder.issued_at <= scheduling.local_date_end(to_date)
         )
 
     if q and q.strip():
@@ -192,15 +237,16 @@ def list_all_medical_orders(
         .all()
     )
 
+    doctors = _load_doctors(db, {o.doctor_id for o in rows})
+    patients, profiles = _load_patients_and_profiles(
+        db, {o.patient_id for o in rows}
+    )
+
     results = []
     for o in rows:
-        doctor = db.get(Doctor, o.doctor_id)
-        patient = db.get(User, o.patient_id)
-        profile = db.query(PatientProfile).filter(PatientProfile.user_id == o.patient_id).first()
-
-        doc_name = f"{doctor.user.first_name} {doctor.user.last_name}".strip() if doctor and doctor.user else None
-        pat_name = f"{patient.first_name} {patient.last_name}".strip() if patient else None
-        pat_dni = profile.dni if profile else None
+        doctor = doctors.get(o.doctor_id)
+        patient = patients.get(o.patient_id)
+        profile = profiles.get(o.patient_id)
 
         results.append(
             AdminMedicalOrderResponse(
@@ -208,11 +254,11 @@ def list_all_medical_orders(
                 folio=o.folio,
                 doctor_id=o.doctor_id,
                 doctor_user_id=o.doctor_user_id,
-                doctor_name=doc_name,
+                doctor_name=_doctor_name(doctor),
                 patient_id=o.patient_id,
                 patient_user_id=o.patient_user_id,
-                patient_name=pat_name,
-                patient_dni=pat_dni,
+                patient_name=_patient_name(patient),
+                patient_dni=profile.dni if profile else None,
                 type=o.type.value,
                 issued_at=o.issued_at,
                 status=o.status,
@@ -325,11 +371,11 @@ def get_doctor_activity(
     date_filter_presc = []
     date_filter_order = []
     if from_date:
-        date_filter_presc.append(Prescription.issued_at >= CLINIC_TZ.localize(datetime.combine(from_date, datetime.min.time())))
-        date_filter_order.append(MedicalOrder.issued_at >= CLINIC_TZ.localize(datetime.combine(from_date, datetime.min.time())))
+        date_filter_presc.append(Prescription.issued_at >= scheduling.local_date_start(from_date))
+        date_filter_order.append(MedicalOrder.issued_at >= scheduling.local_date_start(from_date))
     if to_date:
-        date_filter_presc.append(Prescription.issued_at <= CLINIC_TZ.localize(datetime.combine(to_date, datetime.max.time())))
-        date_filter_order.append(MedicalOrder.issued_at <= CLINIC_TZ.localize(datetime.combine(to_date, datetime.max.time())))
+        date_filter_presc.append(Prescription.issued_at <= scheduling.local_date_end(to_date))
+        date_filter_order.append(MedicalOrder.issued_at <= scheduling.local_date_end(to_date))
 
     # Recetas emitidas
     presc_issued = db.query(Prescription).filter(

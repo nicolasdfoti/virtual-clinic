@@ -52,7 +52,11 @@ WORKDIR /app
 COPY --chown=appuser:appuser backend/app ./app
 COPY --chown=appuser:appuser backend/alembic.ini ./alembic.ini
 COPY --chown=appuser:appuser backend/alembic ./alembic
-COPY --chown=appuser:appuser backend/scripts ./scripts
+# Los scripts de backup/restore viven en la raíz del repo, no en backend/.
+COPY --chown=appuser:appuser scripts ./scripts
+
+# Salida sin buffer para que los logs lleguen a Render en tiempo real.
+ENV PYTHONUNBUFFERED=1
 
 # Directorio de almacenamiento (se monta como volumen en producción)
 RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage
@@ -60,12 +64,13 @@ RUN mkdir -p /app/storage && chown -R appuser:appuser /app/storage
 # Cambiar a usuario no-root
 USER appuser
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+# Health check (start-period holgado: primero corren las migraciones)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Puerto
 EXPOSE 8000
 
-# Comando de inicio
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Comando de inicio: aplica migraciones y recién después levanta uvicorn.
+# Nunca usar `create_all` fuera de tests: el esquema se versiona con Alembic.
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"]

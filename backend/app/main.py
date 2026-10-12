@@ -6,7 +6,10 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import get_settings
 from app.core.rate_limit import limiter
-from app.middleware.rate_limit_middleware import LoginEmailExtractorMiddleware
+from app.middleware.rate_limit_middleware import (
+    LoginEmailExtractorMiddleware,
+    UserIdExtractorMiddleware,
+)
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.origin_check import OriginCheckMiddleware
 from app.routers import (
@@ -46,6 +49,9 @@ app.add_middleware(SlowAPIMiddleware)
 
 # Middleware para extraer email en login/register
 app.add_middleware(LoginEmailExtractorMiddleware)
+
+# Middleware para extraer user_id del JWT (rate limiting por usuario en uploads)
+app.add_middleware(UserIdExtractorMiddleware)
 
 # Security headers (CSP, HSTS, etc.)
 app.add_middleware(SecurityHeadersMiddleware)

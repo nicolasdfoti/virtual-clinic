@@ -15,12 +15,6 @@ CLINIC_TIMEZONE = "America/Argentina/Buenos_Aires"
 
 ACCESS_TOKEN_COOKIE_NAME = "access_token"
 
-# `lax` evita que el cookie viaje en POST cross-site (CSRF basico) y sigue
-# funcionando con la redireccion de Vite en dev. Si en el futuro hay dominios
-# distintos para API y front, hay que pasar a `none` + Secure, lo que obliga a
-# agregar proteccion CSRF explicita.
-ACCESS_TOKEN_COOKIE_SAMESITE = "lax"
-
 ACCESS_TOKEN_COOKIE_PATH = "/"
 
 
@@ -69,6 +63,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=30,
         gt=0,
+    )
+    # `lax` evita que la cookie viaje en POST cross-site (CSRF basico) y sigue
+    # funcionando con la redireccion de Vite en dev. Con frontend (Vercel) y API
+    # (Render) en dominios distintos hay que usar `none` + Secure, lo que obliga
+    # a que el middleware de Origin sea estricto (ver OriginCheckMiddleware).
+    ACCESS_TOKEN_COOKIE_SAMESITE: str = Field(
+        default="lax",
+        description="lax | strict | none. Con dominios distintos usar 'none' (exige Secure).",
     )
 
     # Leyenda legal al pie de recetas/ordenes (configurable por entorno).
@@ -130,12 +132,33 @@ class Settings(BaseSettings):
 
         return value
 
+    @field_validator("ACCESS_TOKEN_COOKIE_SAMESITE")
+    @classmethod
+    def validate_samesite(cls, value: str) -> str:
+        normalized = value.strip().lower()
+
+        if normalized not in {"lax", "strict", "none"}:
+            raise ValueError(
+                "ACCESS_TOKEN_COOKIE_SAMESITE debe ser 'lax', 'strict' o 'none'."
+            )
+
+        return normalized
+
     @property
     def cookie_secure(self) -> bool:
         if self.ENVIRONMENT == "production":
             return True
 
         return self.COOKIE_SECURE
+
+    @property
+    def cookie_samesite(self) -> str:
+        # SameSite=None sin Secure el navegador descarta la cookie; en dev no
+        # hay HTTPS, asi que degradamos a lax en vez de romper la sesion.
+        if self.ACCESS_TOKEN_COOKIE_SAMESITE == "none" and not self.cookie_secure:
+            return "lax"
+
+        return self.ACCESS_TOKEN_COOKIE_SAMESITE
 
 
 @lru_cache

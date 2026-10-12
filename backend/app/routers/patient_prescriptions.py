@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_current_ready_user
+from app.models.doctor import Doctor
 from app.models.enums import MedicalOrderStatus, PrescriptionStatus, Role
 from app.models.prescription import Prescription, MedicalOrder
 from app.models.user import User
@@ -14,6 +15,39 @@ from app.schemas.prescription import (
 from app.services import prescriptions, pdf
 
 router = APIRouter(prefix="/prescriptions", tags=["Patient prescriptions"])
+
+
+def _ensure_can_view(
+    db: Session,
+    current_user: User,
+    *,
+    patient_id: int,
+    doctor_id: int,
+    detail: str,
+) -> None:
+    """Autoriza la descarga de un PDF de receta/orden.
+
+    Puede el paciente dueño, el medico emisor o un admin. Cualquier otro caso
+    (incluido otro medico o un rol inesperado) es 404: no filtramos la
+    existencia del recurso.
+    """
+    if current_user.role == Role.ADMIN:
+        return
+
+    if current_user.role == Role.PATIENT and patient_id == current_user.id:
+        return
+
+    if current_user.role == Role.DOCTOR:
+        doctor = (
+            db.query(Doctor).filter(Doctor.user_id == current_user.id).first()
+        )
+        if doctor is not None and doctor.id == doctor_id:
+            return
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=detail,
+    )
 
 
 @router.get("", response_model=PrescriptionListResponse)
@@ -68,12 +102,13 @@ def download_prescription_pdf(
             detail="No encontramos esa receta.",
         )
 
-    # Solo el paciente dueño, el medico emisor o admin pueden descargar
-    if current_user.role == Role.PATIENT and prescription.patient_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No encontramos esa receta.",
-        )
+    _ensure_can_view(
+        db,
+        current_user,
+        patient_id=prescription.patient_id,
+        doctor_id=prescription.doctor_id,
+        detail="No encontramos esa receta.",
+    )
 
     # Regenerar PDF on-demand
     pdf_data = prescriptions.get_prescription_for_pdf(db, prescription_id)
@@ -146,11 +181,13 @@ def download_order_pdf(
             detail="No encontramos esa orden.",
         )
 
-    if current_user.role == Role.PATIENT and order.patient_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No encontramos esa orden.",
-        )
+    _ensure_can_view(
+        db,
+        current_user,
+        patient_id=order.patient_id,
+        doctor_id=order.doctor_id,
+        detail="No encontramos esa orden.",
+    )
 
     pdf_data = prescriptions.get_medical_order_for_pdf(db, order_id)
     if not pdf_data:

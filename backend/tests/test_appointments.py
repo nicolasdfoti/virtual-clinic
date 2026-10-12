@@ -33,6 +33,19 @@ def create_patient(session, email="pac@test.com", **kwargs):
     return user
 
 
+def add_availability(session, doctor_id, weekday, start=dtime(8, 0), end=dtime(18, 0)):
+    """Agenda semanal para el dia de la semana indicado (hora local)."""
+    availability = DoctorAvailability(
+        doctor_id=doctor_id,
+        weekday=weekday,
+        start_time=start,
+        end_time=end,
+    )
+    session.add(availability)
+    session.commit()
+    return availability
+
+
 SLOTS_PATH = "/api/doctors/{id}/slots"
 APPOINTMENTS_PATH = "/api/appointments"
 
@@ -81,12 +94,23 @@ def test_get_slots_with_availability(client, db_session, doctor_user, user):
     assert len(slots) > 0
 
 
+def test_get_slots_rango_muy_largo_es_400(client, db_session, doctor_user, user):
+    from app.models.doctor import Doctor
+    doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
+    login_as(client, user)
+    resp = client.get(
+        f"/api/doctors/{doctor_row.id}/slots?from=2030-01-01&to=2031-01-01"
+    )
+    assert resp.status_code == 400
+
+
 def test_book_appointment_success(client, db_session, doctor_user):
     patient = create_patient(db_session, email="patient@test.com")
     from app.models.doctor import Doctor
     doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
 
     starts = _mk_dt(2030, 6, 15, 10, 0)
+    add_availability(db_session, doctor_row.id, starts.weekday())
     login_as(client, patient)
     resp = client.post(
         APPOINTMENTS_PATH,
@@ -130,6 +154,7 @@ def test_book_appointment_conflict_409(client, db_session, doctor_user):
     doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
 
     starts = _mk_dt(2030, 6, 15, 10, 0)
+    add_availability(db_session, doctor_row.id, starts.weekday())
     starts_utc = scheduling.to_utc(starts)
     ends_utc = starts_utc + timedelta(minutes=30)
 
@@ -167,6 +192,7 @@ def test_concurrency_booking(client, db_session, doctor_user):
     doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
 
     starts = _mk_dt(2030, 6, 20, 11, 0)
+    add_availability(db_session, doctor_row.id, starts.weekday())
 
     login_as(client, patient1)
     resp1 = client.post(
@@ -189,6 +215,78 @@ def test_concurrency_booking(client, db_session, doctor_user):
         },
     )
     assert resp2.status_code == 409
+
+
+def test_book_appointment_fuera_de_agenda_es_409(client, db_session, doctor_user):
+    patient = create_patient(db_session, email="outside@test.com", dni="55555555")
+    from app.models.doctor import Doctor
+    doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
+
+    starts = _mk_dt(2030, 6, 15, 10, 0)
+    # Agenda solo de 8 a 9; el turno de las 10 cae fuera de la franja.
+    add_availability(
+        db_session, doctor_row.id, starts.weekday(), start=dtime(8, 0), end=dtime(9, 0)
+    )
+
+    login_as(client, patient)
+    resp = client.post(
+        APPOINTMENTS_PATH,
+        json={
+            "doctor_id": doctor_row.id,
+            "starts_at": starts.isoformat(),
+            "modality": "VIDEO",
+        },
+    )
+    assert resp.status_code == 409
+
+
+def test_book_appointment_sin_agenda_es_409(client, db_session, doctor_user):
+    patient = create_patient(db_session, email="noagenda@test.com", dni="66666666")
+    from app.models.doctor import Doctor
+    doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
+
+    starts = _mk_dt(2030, 6, 15, 10, 0)
+
+    login_as(client, patient)
+    resp = client.post(
+        APPOINTMENTS_PATH,
+        json={
+            "doctor_id": doctor_row.id,
+            "starts_at": starts.isoformat(),
+            "modality": "VIDEO",
+        },
+    )
+    assert resp.status_code == 409
+
+
+def test_book_appointment_en_bloqueo_es_409(client, db_session, doctor_user):
+    patient = create_patient(db_session, email="blocked@test.com", dni="77777777")
+    from app.models.doctor import Doctor
+    doctor_row = db_session.query(Doctor).filter_by(user_id=doctor_user.id).first()
+
+    starts = _mk_dt(2030, 6, 15, 10, 0)
+    add_availability(db_session, doctor_row.id, starts.weekday())
+
+    starts_utc = scheduling.to_utc(starts)
+    db_session.add(
+        DoctorTimeOff(
+            doctor_id=doctor_row.id,
+            starts_at=starts_utc - timedelta(hours=1),
+            ends_at=starts_utc + timedelta(hours=1),
+        )
+    )
+    db_session.commit()
+
+    login_as(client, patient)
+    resp = client.post(
+        APPOINTMENTS_PATH,
+        json={
+            "doctor_id": doctor_row.id,
+            "starts_at": starts.isoformat(),
+            "modality": "VIDEO",
+        },
+    )
+    assert resp.status_code == 409
 
 
 def test_cancel_appointment_patient_success(client, db_session, doctor_user):

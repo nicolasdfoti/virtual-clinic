@@ -11,6 +11,8 @@ from app.dependencies import get_current_doctor, get_current_ready_user, require
 from app.models.appointment import Appointment
 from app.models.care_relationship import CareRelationship
 from app.models.doctor import Doctor
+from app.models.doctor_availability import DoctorAvailability
+from app.models.doctor_time_off import DoctorTimeOff
 from app.models.enums import (
     ACTIVE_APPOINTMENT_STATUSES,
     AppointmentModality,
@@ -45,6 +47,60 @@ def _format_name(user: User | None) -> str | None:
         return None
     name = f"{user.first_name} {user.last_name}".strip()
     return name or None
+
+
+def _ensure_within_schedule(
+    db: Session,
+    doctor: Doctor,
+    *,
+    starts_local: datetime,
+    ends_local: datetime,
+    starts_utc: datetime,
+    ends_utc: datetime,
+) -> None:
+    """Rechaza turnos fuera de la agenda del medico o dentro de un bloqueo.
+
+    El frontend solo ofrece slots generados a partir de la agenda, pero la API
+    es publica para el paciente y no se puede confiar en que mande un slot
+    valido: la validacion real vive aca.
+    """
+    time_off = (
+        db.query(DoctorTimeOff)
+        .filter(
+            DoctorTimeOff.doctor_id == doctor.id,
+            DoctorTimeOff.starts_at < ends_utc,
+            DoctorTimeOff.ends_at > starts_utc,
+        )
+        .first()
+    )
+
+    if time_off is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El médico no atiende en ese horario.",
+        )
+
+    weekday = starts_local.weekday()
+    start_clock = starts_local.time()
+    end_clock = ends_local.time()
+
+    availability_rows = (
+        db.query(DoctorAvailability)
+        .filter(
+            DoctorAvailability.doctor_id == doctor.id,
+            DoctorAvailability.weekday == weekday,
+        )
+        .all()
+    )
+
+    for availability in availability_rows:
+        if availability.start_time <= start_clock and end_clock <= availability.end_time:
+            return
+
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="Ese horario no está dentro de la agenda del médico.",
+    )
 
 
 @router.post(
@@ -93,6 +149,15 @@ def book_appointment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El horario seleccionado ya no está disponible.",
         )
+
+    _ensure_within_schedule(
+        db,
+        doctor,
+        starts_local=starts_at,
+        ends_local=starts_at + duration,
+        starts_utc=starts_utc,
+        ends_utc=ends_utc,
+    )
 
     overlap = (
         db.query(Appointment)

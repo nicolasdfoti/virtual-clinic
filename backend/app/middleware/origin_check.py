@@ -24,19 +24,15 @@ class OriginCheckMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        # Solo validar metodos mutantes y solo si hay Origin header
         if request.method in MUTATING_METHODS:
             origin = request.headers.get("origin")
 
-            # En API calls desde el mismo origen (SPA), el navegador envia Origin
-            # En llamadas server-to-server o herramientas, puede no haber Origin
-            # Permitimos requests sin Origin (server-to-server) pero validamos si hay
-
             if origin:
-                allowed_origins = settings.CORS_ORIGINS
-
-                # Normalizar origin para comparacion (quitar trailing slash)
+                # Normalizar ambos lados (quitar trailing slash).
                 origin_norm = origin.rstrip("/")
+                allowed_origins = {
+                    candidate.rstrip("/") for candidate in settings.CORS_ORIGINS
+                }
 
                 if origin_norm not in allowed_origins:
                     if settings.ENVIRONMENT == "production":
@@ -44,9 +40,20 @@ class OriginCheckMiddleware(BaseHTTPMiddleware):
                             status_code=403,
                             content={"detail": "Origen no permitido."},
                         )
-                    else:
-                        # En desarrollo, loguear pero permitir
-                        import logging
-                        logging.warning(f"Origin no permitido en desarrollo: {origin}")
+
+                    # En desarrollo logueamos pero dejamos pasar para no
+                    # bloquear herramientas locales (curl, Swagger, etc.).
+                    import logging
+
+                    logging.warning(f"Origin no permitido en desarrollo: {origin}")
+            elif settings.ENVIRONMENT == "production":
+                # Con SameSite=None la cookie viaja cross-site, asi que el
+                # Origin pasa a ser la unica barrera CSRF: en produccion no
+                # aceptamos requests mutantes sin Origin. Ningun cliente
+                # legitimo (SPA en el navegador) muta estado sin mandarlo.
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Falta el encabezado Origin."},
+                )
 
         return await call_next(request)

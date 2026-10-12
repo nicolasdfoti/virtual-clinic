@@ -6,7 +6,24 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-DATABASE_URL = settings.DATABASE_URL
+
+def normalize_database_url(url: str) -> str:
+    """Fuerza el driver psycopg (SQLAlchemy 2) sobre la URL que da el hosting.
+
+    Render/Heroku entregan `postgres://...` o `postgresql://...`, que SQLAlchemy
+    mapearia a psycopg2 (no instalado). Con `postgresql+psycopg://` usamos
+    psycopg 3, que es el que esta en requirements.
+    """
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://"):]
+
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://"):]
+
+    return url
+
+
+DATABASE_URL = normalize_database_url(settings.DATABASE_URL)
 
 engine = create_engine(
     DATABASE_URL,

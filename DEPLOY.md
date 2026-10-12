@@ -40,6 +40,48 @@ cp .env.example .env
 
 ---
 
+## Despliegue en Render (API) + Vercel (frontend)
+
+Topología recomendada para este repo: la API (Docker) en Render y el frontend
+(React/Vite) en Vercel. Son **sitios distintos**, así que la sesión viaja con
+`SameSite=None; Secure` y la protección CSRF queda a cargo del middleware de
+`Origin` del backend.
+
+### Backend en Render
+1. Render → **New → Blueprint** y elegir este repo. Toma `render.yaml` y crea:
+   - Postgres (`virtual-clinic-db`) y Redis (`virtual-clinic-redis`, para rate limiting).
+   - Web service Docker (`virtual-clinic-api`) apuntando al `Dockerfile` de la raíz.
+2. La build usa `requirements.txt` (lock generado con `pip-compile`).
+3. Al arrancar, el contenedor corre `alembic upgrade head` y después uvicorn
+   (ver `CMD` del `Dockerfile`): el esquema queda migrado en el primer deploy.
+4. Setear a mano en el servicio web:
+   - `CORS_ORIGINS` = el origen exacto de Vercel (ej: `https://mi-app.vercel.app`).
+     Puede ir más de uno separado por coma.
+   - El resto (`DATABASE_URL`, `RATE_LIMIT_STORAGE_URI`, `SECRET_KEY`, cookies,
+     `STORAGE_DIR`) lo inyecta el blueprint.
+5. Verificar `https://<api>.onrender.com/api/health`.
+
+> ⚠️ En plan free el disco es efímero: los archivos de pacientes y los PDFs
+> generados se pierden en cada deploy. Para persistirlos, usar un disco de
+> Render montado en `/app/storage` (bloque comentado en `render.yaml`) o migrar
+> el storage a objetos (S3-compatible).
+
+### Frontend en Vercel
+1. Importar el repo y poner **Root Directory = `frontend`** (framework Vite).
+2. Variable de entorno del proyecto: `VITE_API_URL=https://<api>.onrender.com/api`.
+   Sin esto el bundle queda apuntando a `http://localhost:8000/api`.
+3. `vercel.json` ya incluye el rewrite de SPA (`/(.*) → /index.html`), así que
+   refrescar `/app/...` o `/professionals` no da 404.
+4. Copiar el dominio final de Vercel y pegarlo en `CORS_ORIGINS` del backend.
+
+### Alternativa: mismo dominio
+Si en cambio se publican `app.tudominio.com` (Vercel) y
+`api.tudominio.com` (Render), alcanza con dejarlos bajo el mismo dominio
+registrable y usar `ACCESS_TOKEN_COOKIE_SAMESITE=lax`. Es más simple y más
+seguro (evita depender de `SameSite=None`).
+
+---
+
 ## Despliegue con Docker Compose
 
 ### Producción

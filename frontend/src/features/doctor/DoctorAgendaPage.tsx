@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { format, startOfWeek, endOfWeek, addDays } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toZonedTime } from 'date-fns-tz'
 import { useDoctorAppointments, useCancelAppointment, useCompleteAppointment, useNoShowAppointment } from './hooks'
@@ -7,6 +7,7 @@ import type { DoctorAppointment } from './types'
 import { Avatar, Card } from '../../components/ui'
 import { buttonClasses } from '../../components/ui/buttonStyles'
 import { DoctorAvailabilityEditor } from './DoctorAvailabilityEditor'
+import { buildAgendaWeek } from './agendaWeek'
 
 const CLINIC_TZ = 'America/Argentina/Buenos_Aires'
 
@@ -128,7 +129,9 @@ function DayAppointments({
   onComplete: (id: number) => void
   onNoShow: (id: number) => void
 }) {
-  const dayLabel = format(toZonedTime(date, CLINIC_TZ), "EEEE d 'de' MMMM", { locale: es })
+  // `date` ya viene en horario de la clinica (wall-clock), asi que se formatea
+  // directo: volver a aplicar toZonedTime correria el dia.
+  const dayLabel = format(date, "EEEE d 'de' MMMM", { locale: es })
 
   if (appointments.length === 0) {
     return (
@@ -178,17 +181,10 @@ export function DoctorAgendaPage() {
     noShowMutation.mutate(id)
   }
 
-  const weekStart = startOfWeek(viewDate, { weekStartsOn: 1 })
-  const weekEnd = endOfWeek(viewDate, { weekStartsOn: 1 })
-
-  const days: { date: Date; appointments: DoctorAppointment[] }[] = []
-  for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
-    const dayAppointments = appointments.filter(a => {
-      const apptDate = toZonedTime(new Date(a.starts_at), CLINIC_TZ)
-      return format(apptDate, 'yyyy-MM-dd') === format(d, 'yyyy-MM-dd')
-    })
-    days.push({ date: new Date(d), appointments: dayAppointments })
-  }
+  const { start: weekStart, end: weekEnd, days } = buildAgendaWeek(
+    viewDate,
+    appointments,
+  )
 
   if (isLoading) {
     return (
@@ -218,9 +214,9 @@ export function DoctorAgendaPage() {
           </h1>
           {viewMode === 'agenda' && (
             <p className="mt-1 text-slate-600">
-              Semana del {format(toZonedTime(weekStart, CLINIC_TZ), "d 'de' MMMM", { locale: es })}
+              Semana del {format(weekStart, "d 'de' MMMM", { locale: es })}
               {' '}al{' '}
-              {format(toZonedTime(weekEnd, CLINIC_TZ), "d 'de' MMMM", { locale: es })}
+              {format(weekEnd, "d 'de' MMMM", { locale: es })}
             </p>
           )}
         </div>

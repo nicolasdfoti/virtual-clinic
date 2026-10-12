@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Upl
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.core.rate_limit import upload_limiter
 from app.database import get_db
 from app.dependencies import get_current_doctor
 from app.models.doctor import Doctor
@@ -22,10 +23,11 @@ ENTITY_TYPE_FILE = "patient_file"
     response_model=PatientFileResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@upload_limiter
 async def upload_patient_file(
     patient_id: int,
+    request: Request,
     file: UploadFile = File(...),
-    request: Request = None,
     doctor: Doctor = Depends(get_current_doctor),
     db: Session = Depends(get_db),
 ):
@@ -36,8 +38,15 @@ async def upload_patient_file(
             detail=PATIENT_NOT_FOUND_DETAIL,
         )
 
-    content = await file.read()
-    await file.close()
+    try:
+        content = await patient_files.read_upload_within_limit(file)
+    except PatientFileError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        )
+    finally:
+        await file.close()
 
     try:
         patient_file = patient_files.upload_file(

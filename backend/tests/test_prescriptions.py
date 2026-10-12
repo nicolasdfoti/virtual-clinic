@@ -362,6 +362,46 @@ def test_paciente_no_descarga_receta_ajena_es_404(client, doctor_user, db_sessio
     assert response.status_code == 404
 
 
+def test_medico_ajeno_no_descarga_receta_es_404(client, doctor_user, db_session):
+    doctor, patient = set_up(db_session, doctor_user)
+    otro = second_doctor(db_session)
+
+    login_as(client, doctor_user)
+    created = client.post(
+        f"/api/doctor/patients/{patient.id}/prescriptions",
+        json={"patient_id": patient.id, "items": [PRESCRIPTION_ITEM]},
+    ).json()
+
+    # El medico emisor si puede descargar.
+    assert client.get(f"/api/prescriptions/{created['id']}/pdf").status_code == 200
+
+    # Otro medico (no emisor) no ve el PDF: 404, no 403.
+    login_as(client, otro.user)
+    response = client.get(f"/api/prescriptions/{created['id']}/pdf")
+
+    assert response.status_code == 404
+
+
+def test_medico_ajeno_no_descarga_orden_es_404(client, doctor_user, db_session):
+    doctor, patient = set_up(db_session, doctor_user)
+    otro = second_doctor(db_session)
+
+    login_as(client, doctor_user)
+    created = client.post(
+        f"/api/doctor/patients/{patient.id}/orders",
+        json={"patient_id": patient.id, "type": "LAB", "studies": "Hemograma"},
+    ).json()
+
+    assert (
+        client.get(f"/api/prescriptions/orders/{created['id']}/pdf").status_code == 200
+    )
+
+    login_as(client, otro.user)
+    response = client.get(f"/api/prescriptions/orders/{created['id']}/pdf")
+
+    assert response.status_code == 404
+
+
 def test_paciente_lista_y_descarga_su_orden(client, doctor_user, db_session):
     _, patient = set_up(db_session, doctor_user)
     login_as(client, doctor_user)
