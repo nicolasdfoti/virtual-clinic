@@ -45,6 +45,7 @@ DUMMY_PASSWORD_HASH = hash_password("dummy-password-not-a-real-user")
 
 def set_auth_cookie(response: Response, access_token: str) -> None:
     response.set_cookie(
+        partitioned=True,
         key=ACCESS_TOKEN_COOKIE_NAME,
         value=access_token,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
@@ -57,6 +58,7 @@ def set_auth_cookie(response: Response, access_token: str) -> None:
 
 def clear_auth_cookie(response: Response) -> None:
     response.delete_cookie(
+        partitioned=True,
         key=ACCESS_TOKEN_COOKIE_NAME,
         httponly=True,
         secure=settings.cookie_secure,

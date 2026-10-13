@@ -245,7 +245,7 @@ export function DoctorAgendaPage() {
                 onClick={() => setViewDate(addDays(viewDate, -7))}
                 className={buttonClasses({ variant: 'outline', size: 'sm' })}
               >
-                Semana anterior
+                ←
               </button>
               <button
                 onClick={() => setViewDate(new Date())}
@@ -257,7 +257,7 @@ export function DoctorAgendaPage() {
                 onClick={() => setViewDate(addDays(viewDate, 7))}
                 className={buttonClasses({ variant: 'outline', size: 'sm' })}
               >
-                Semana siguiente
+                →
               </button>
             </>
           )}
